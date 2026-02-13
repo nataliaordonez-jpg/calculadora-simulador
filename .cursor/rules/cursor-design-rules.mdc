@@ -1,0 +1,1629 @@
+---
+alwaysApply: false
+---
+# Cursorrules: Componentes con Variantes y Usos – BeweOS + HeroUI
+
+## Vertical Slice Architecture
+
+Este proyecto sigue los principios de **Vertical Slice Architecture**, organizando las carpetas según temáticas específicas. Cada slice es una porción vertical completa de funcionalidad que atraviesa todas las capas de la aplicación, donde los componentes UI actúan como **adaptadores** que se conectan a la **capa de aplicación** a través de **puertos** bien definidos.
+
+### Capas de la Arquitectura
+
+#### 1. **Dominio (Core)**
+- Entidades de negocio
+- Casos de uso y reglas de negocio
+- Independiente de tecnologías externas
+
+#### 2. **Aplicación (Application Layer)**
+- Servicios de aplicación
+- Puertos (interfaces) para comunicación externa
+- Orquestación de casos de uso
+
+#### 3. **Infraestructura (Adapters)**
+- **UI Adapters**: Componentes React/NextJS
+- **API Adapters**: Clientes HTTP, GraphQL
+- **Data Adapters**: Repositorios, bases de datos
+- **External Services**: Servicios de terceros
+
+### Principios para Componentes UI
+
+#### 1. **Separación de Responsabilidades**
+```typescript
+// ✅ Correcto: Componente como presentador puro
+const UserCard = ({ user, onEdit }: UserCardProps) => {
+  return (
+    <Card>
+      <CardBody>
+        <h2>{user.name}</h2>
+        <Button onPress={onEdit}>Editar</Button>
+      </CardBody>
+    </Card>
+  );
+};
+
+// ❌ Incorrecto: Lógica de negocio en el componente
+const UserCard = ({ userId }: { userId: string }) => {
+  const [user, setUser] = useState();
+  
+  const updateUser = async () => {
+    // Lógica de negocio directa
+    await userRepository.update(userId, data);
+  };
+  
+  return <Card>...</Card>;
+};
+```
+
+#### 2. **Dependency Inversion**
+Los componentes deben recibir dependencias a través de props o hooks que implementen puertos:
+
+```typescript
+// Puerto definido en la capa de aplicación
+interface UserService {
+  getUser(id: string): Promise<User>;
+  updateUser(id: string, data: UpdateUserData): Promise<void>;
+}
+
+// Hook que implementa el puerto
+const useUserService = (): UserService => {
+  return {
+    getUser: (id) => apiClient.get(`/users/${id}`),
+    updateUser: (id, data) => apiClient.put(`/users/${id}`, data)
+  };
+};
+
+// Componente que consume el puerto
+const UserProfile = ({ userId }: UserProfileProps) => {
+  const userService = useUserService();
+  const { data: user } = useQuery(['user', userId], () => userService.getUser(userId));
+  
+  return <UserCard user={user} onEdit={(data) => userService.updateUser(userId, data)} />;
+};
+```
+
+#### 3. **Composición sobre Herencia**
+Utilizar composición de componentes HeroUI y componentes del proyecto para crear interfaces complejas:
+
+```typescript
+// Componente base reutilizable
+const StatusBadge = ({ status }: { status: string }) => (
+  <Badge variant={status === 'active' ? 'solid' : 'faded'}>
+    {status}
+  </Badge>
+);
+
+// Componente compuesto específico del slice
+const UserInfo = ({ user }: { user: User }) => (
+  <div className="flex items-center gap-2">
+    <Avatar src={user.avatar} />
+    <div>
+      <p>{user.name}</p>
+      <StatusBadge status={user.status} />
+    </div>
+  </div>
+);
+
+// Componente complejo del slice
+const UserManagementTable = ({ users, onUserAction }: UserManagementProps) => (
+  <Table>
+    {users.map(user => (
+      <TableRow key={user.id}>
+        <TableCell><UserInfo user={user} /></TableCell>
+        <TableCell>
+          <Button onPress={() => onUserAction('edit', user.id)}>
+            Editar
+          </Button>
+        </TableCell>
+      </TableRow>
+    ))}
+  </Table>
+);
+```
+
+### Estructura de Directorios
+
+Cada slice incluye cuatro elementos principales organizados según **Vertical Slice Architecture**:
+
+```
+src/
+├── shared/                      # Componentes y recursos compartidos
+│   ├── ui/
+│   │   └── components/          # Componentes UI reutilizables del proyecto
+│   │       ├── Button/         # Button personalizado
+│   │       ├── Card/           # Card personalizada  
+│   │       ├── Input/          # Input personalizado
+│   │       ├── Select/         # Select personalizado
+│   │       └── ...             # Otros componentes base
+│   └── assets/
+│       └── images/             # Imágenes y recursos visuales
+└── [feature-name]/             # Cada funcionalidad es un slice vertical
+    ├── domain/                 # Capa de Dominio del slice
+    │   ├── entities/           # Entidades de negocio
+    │   ├── models/            # Value Objects
+    │   ├── enums/             # Enumeraciones del dominio
+    │   ├── interfaces/        # Contratos del dominio
+    │   ├── ports/             # Puertos (interfaces para adapters)
+    │   ├── repository/        # Interfaces de repositorios
+    │   ├── types/             # Tipos específicos del dominio
+    │   └── error/             # Errores específicos del dominio
+    ├── application/            # Capa de Aplicación del slice
+    │   ├── use-cases/         # Casos de uso específicos
+    │   └── mocks/             # Mocks para testing
+    ├── infrastructure/         # Capa de Infraestructura del slice
+    │   ├── adapters/          # Adaptadores externos (API, Storage, etc.)
+    │   ├── dtos/              # Data Transfer Objects
+    │   ├── mappers/           # Transformadores de datos
+    │   └── mocks/             # Mocks de infraestructura
+    └── ui/                     # Capa de UI del slice
+        ├── components/        # Componentes específicos del slice
+        │   └── [component-name]/
+        │       ├── [component-name].component.tsx
+        │       ├── [component-name].component.scss
+        │       └── [component-name].component.spec.ts
+        ├── pages/             # Páginas del slice
+        ├── enums/             # Enums específicos de UI
+        ├── interfaces/        # Interfaces de UI
+        └── hooks/             # Custom hooks del slice
+```
+
+## 🔧 Aurora UI: Proxy de HeroUI
+
+**INFORMACIÓN CRÍTICA**: `@beweco/aurora-ui` es un **proxy/wrapper de HeroUI** que incluye:
+
+### **Tipos de Componentes en Aurora UI**
+
+#### **1. Componentes Custom (Personalizados)**
+- Componentes completamente rediseñados para BeweOS
+- **Documentación**: Disponible en `@/shared/ui/components/`
+- **Uso**: Importar desde `@beweco/aurora-ui` según documentación en `@/shared`
+
+#### **2. Componentes Proxy (Idénticos a HeroUI)**
+- Componentes que funcionan **exactamente igual** que en `@heroui/react`
+- **Diferencia**: Solo cambia la importación, la API es idéntica
+- **Uso**: Importar desde `@beweco/aurora-ui` en lugar de `@heroui/react`
+
+### **Identificación de Componentes**
+
+```typescript
+// ✅ COMPONENTES CUSTOM (documentados en @/shared)
+import { Phone } from "@beweco/aurora-ui";           // Custom con selector país integrado
+import { ThemePicker } from "@beweco/aurora-ui";     // Custom específico BeweOS
+import { AutoComplete } from "@beweco/aurora-ui";    // Custom con reglas BeweOS
+
+// ✅ COMPONENTES PROXY (idénticos a HeroUI)
+import { Table, TableRow, TableCell } from "@beweco/aurora-ui";   // Mismo API que HeroUI
+import { Modal, ModalContent, ModalBody } from "@beweco/aurora-ui"; // Mismo API que HeroUI
+```
+
+### **Regla de Verificación**
+
+**ANTES de usar cualquier componente**:
+
+1. **Verificar en `@/shared/ui/components/`** → ¿Existe documentación específica?
+   - **SÍ**: Seguir la documentación custom
+   - **NO**: Usar como proxy de HeroUI
+
+2. **Verificar disponibilidad en `@beweco/aurora-ui`**
+   - **SÍ**: Importar desde aurora-ui
+   - **NO**: Usar directamente desde `@heroui/react`
+
+### Orden de Prioridad para Componentes UI
+
+**REGLA FUNDAMENTAL**: Seguir esta jerarquía EXACTA para seleccionar componentes.
+
+#### 1. **Prioridad 1: Componentes Custom del Proyecto (`@/shared/ui/components/`)**
+```typescript
+// ✅ MÁXIMA PRIORIDAD: Componentes wrapper documentados en @/shared
+import { Button } from "@shared/ui/components/Button/Button";     // Wrapper de HeroUI
+import { Input } from "@shared/ui/components/Input/Input";       // Wrapper de HeroUI
+import { Select } from "@shared/ui/components/Select/Select";     // Wrapper de HeroUI
+import Card from "@shared/ui/components/Card/Card";              // Wrapper de HeroUI
+```
+
+#### 2. **Prioridad 2: Aurora UI Components (`@beweco/aurora-ui`)**
+```typescript
+// ✅ SEGUNDA PRIORIDAD: Componentes custom o proxy desde aurora-ui
+// Componentes CUSTOM (documentados en @/shared)
+import { Phone } from "@beweco/aurora-ui";              // Custom con funcionalidad especial
+import { ThemePicker } from "@beweco/aurora-ui";        // Custom específico BeweOS
+import { AutoComplete } from "@beweco/aurora-ui";       // Custom con reglas BeweOS
+
+// Componentes PROXY (idénticos a HeroUI)
+import { Table, TableRow, TableCell } from "@beweco/aurora-ui";
+import { Modal, ModalContent, ModalBody } from "@beweco/aurora-ui";
+import { Tabs, Tab, Radio, RadioGroup } from "@beweco/aurora-ui";
+```
+
+#### 3. **Prioridad 3: HeroUI Directo (`@heroui/react`)**
+```typescript
+// ✅ TERCERA PRIORIDAD: Solo si NO existe en aurora-ui
+import { Skeleton, Progress, Spinner } from "@heroui/react";
+```
+
+#### 4. **Prioridad 4: Bibliotecas Externas**
+```typescript
+// ✅ ÚLTIMA OPCIÓN: Solo si no existe en ninguna prioridad anterior
+import { SpecialComponent } from "some-external-library";
+```
+
+### **Flujo de Decisión para Componentes**
+
+```
+¿Necesito un componente?
+├── ¿Existe en @/shared/ui/components/?
+│   ├── SÍ → USAR componente del proyecto ✅
+│   └── NO → Continuar
+├── ¿Existe en @beweco/aurora-ui?
+│   ├── SÍ → ¿Está documentado en @/shared?
+│   │   ├── SÍ → Seguir documentación custom ✅
+│   │   └── NO → Usar como proxy de HeroUI ✅
+│   └── NO → Continuar
+├── ¿Existe en @heroui/react?
+│   ├── SÍ → Usar HeroUI directo ✅
+│   └── NO → Continuar
+└── Buscar en bibliotecas externas ⚠️
+```
+
+### 📚 Catálogo de Componentes por Fuente
+
+#### **🎯 Componentes Custom del Proyecto (`@/shared/ui/components/`)**
+Wrappers personalizados que **SIEMPRE** tienen prioridad:
+
+- **Button**: Wrapper personalizado sobre HeroUI Button con reglas BeweOS
+- **Card**: Card personalizada sin sombra, con reglas de padding específicas
+- **Input**: Input personalizado con label externo y validaciones
+- **Select**: Select personalizado con label externo y reglas BeweOS
+- **Icons**: Wrapper para @solar-icons/react
+
+**REFERENCIA PARA CARDS:** Usar `/beweosagency/src/settings` como patrón de referencia para componentes, variantes, spacing y estilo en cards.
+
+#### **🔧 Componentes Custom de Aurora UI (`@beweco/aurora-ui`)**
+Documentación disponible en `@/shared/ui/components/`:
+
+- **Phone**: Component con selector de país integrado y validación
+- **ThemePicker**: Selector de temas específico BeweOS con preview visual
+- **AutoComplete**: AutoComplete con reglas específicas de diseño BeweOS
+
+#### **📋 Uso del Phone Component (Especial)**
+```typescript
+// ✅ CORRECTO: Phone component de aurora-ui
+import { Phone } from "@beweco/aurora-ui";
+
+// NO crear selectores adicionales para país
+<Phone
+  label="Teléfono"
+  required
+  value={form.phone}
+  onChange={(value) => handleChange("phone", value)}
+  error={false}
+  errorText=""
+/>
+```
+
+#### **⚡ Componentes Proxy de Aurora UI**
+Funcionan **idénticos** a HeroUI, solo cambia la importación:
+
+```typescript
+// ✅ PROXY - Misma API que HeroUI
+import { Table, TableRow, TableCell, TableHeader, TableBody, TableColumn } from "@beweco/aurora-ui";
+import { Modal, ModalContent, ModalBody, ModalHeader, ModalFooter } from "@beweco/aurora-ui";
+import { Tabs, Tab, TabsBody, TabsHeader } from "@beweco/aurora-ui";
+import { Radio, RadioGroup, Checkbox, CheckboxGroup } from "@beweco/aurora-ui";
+import { Badge, Chip, Avatar, Divider } from "@beweco/aurora-ui";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@beweco/aurora-ui";
+```
+
+#### **🎨 HeroUI Directo (Solo si no está en aurora-ui)**
+```typescript
+// ✅ Solo usar si NO existe en aurora-ui
+import { Skeleton, Progress, Spinner, Tooltip } from "@heroui/react";
+```
+
+### **🔍 Verificación de Componentes**
+
+**PROCESO OBLIGATORIO antes de importar**:
+
+1. **¿Existe en `@/shared/ui/components/`?** → Usar y seguir documentación
+2. **¿Existe en `@beweco/aurora-ui`?** → Verificar si es custom o proxy
+3. **¿Existe en `@heroui/react`?** → Usar solo como último recurso
+4. **¿No existe en ninguno?** → Considerar biblioteca externa
+
+### **⚠️ Reglas Críticas de Importación**
+
+```typescript
+// ❌ NUNCA hacer esto - Saltar prioridades
+import { Button } from "@heroui/react";         // Existe en @/shared
+import { Phone } from "react-phone-input-2";    // Existe en aurora-ui
+import { Modal } from "@heroui/react";          // Existe en aurora-ui
+
+// ✅ SIEMPRE hacer esto - Respetar jerarquía
+import { Button } from "@shared/ui/components/Button/Button";  // Prioridad 1
+import { Phone } from "@beweco/aurora-ui";                   // Prioridad 2
+import { Modal } from "@beweco/aurora-ui";                   // Prioridad 2
+```
+
+---
+
+## Objetivo
+Este documento define las variantes aceptadas y los casos de uso asociados para los componentes utilizados en la biblioteca de diseño BeweOS, extendida desde HeroUI. Se alinea con las decisiones de diseño y **Vertical Slice Architecture** establecidas para el proyecto, asegurando coherencia visual, funcionalidad responsiva y compatibilidad con Figma.
+
+El objetivo principal de estas reglas es garantizar que los componentes y sus variantes sean utilizados para implementar fielmente el módulo de Figma seleccionado en cuestión, **respetando la separación de capas de la Vertical Slice Architecture**. Cada conjunto de reglas y patrones documentados aquí está orientado a asegurar una transición precisa y coherente desde el diseño visual en Figma hacia su implementación técnica como adaptadores UI.
+
+---
+
+## ⚠️ REGLA CRÍTICA: EXCLUSIÓN DE ELEMENTOS DE NAVEGACIÓN POR DEFECTO
+
+**IMPORTANTE**: Los siguientes elementos **NUNCA** deben incluirse en la implementación por defecto, a menos que se solicite **EXPLÍCITAMENTE** con comandos específicos:
+
+### 🚫 ELEMENTOS PROHIBIDOS POR DEFECTO
+
+#### **1. Sidebar/Menu Lateral**
+- **Qué incluye**: Barra lateral, menús de navegación principal, logos en sidebar
+- **Razón**: Es un componente abstraído llamado `Menu` que funciona a nivel de layout global
+- **Identificación en Figma**: Cualquier barra vertical que contenga navegación principal
+
+#### **2. TopBar/Header Global**
+- **Qué incluye**: Barra superior global, navegación superior principal, botones de notificaciones globales
+- **Razón**: Es parte del layout global de la aplicación
+- **Identificación en Figma**: Header principal que aparece en todas las páginas
+
+#### **3. Tabs/Pestañas de Navegación**
+- **Qué incluye**: Pestañas horizontales que cambian entre secciones principales
+- **Razón**: Son elementos de navegación entre vistas diferentes
+- **Identificación en Figma**: Elementos tipo "Configuración", "Perfil", "Horarios", etc.
+
+#### **4. Submenús y Navegación Secundaria**
+- **Qué incluye**: Navegación horizontal secundaria, breadcrumbs, menús desplegables de navegación
+- **Razón**: Navegación que está fuera del contexto específico del contenido principal
+- **Identificación en Figma**: Elementos que permiten navegar entre diferentes páginas/vistas
+
+#### **5. Botones de Navegación Global**
+- **Qué incluye**: Botones "Atrás", flechas de navegación, botones de configuración global
+- **Razón**: Son parte de la navegación global, no del contenido específico
+- **Identificación en Figma**: Iconos de flecha atrás, botones de configuración global
+
+### ✅ ELEMENTOS QUE SÍ SE DEBEN INCLUIR
+
+#### **1. Contenido Principal del Módulo**
+- Formularios específicos
+- Tablas de datos
+- Cards con información específica
+- Botones de acción específicos del contenido (Guardar, Editar, Eliminar)
+
+#### **2. Navegación Funcional Interna**
+- Filtros dentro de tablas
+- Paginación de datos
+- Ordenamiento de columnas
+- Botones de acción específicos del contenido
+
+#### **3. Elementos de UI del Contexto**
+- Modales específicos del módulo
+- Alertas y notificaciones contextuales
+- Formularios y campos específicos
+- Estados de carga específicos del contenido
+
+### 📝 COMANDOS QUE PERMITEN INCLUIR NAVEGACIÓN
+
+Solo cuando el usuario use **explícitamente** estos comandos, se debe incluir navegación:
+
+```bash
+# ✅ COMANDOS QUE HABILITAN NAVEGACIÓN
+"incluye los tabs"
+"implementa la navegación completa" 
+"con los submenus"
+"maqueta todo incluyendo la navegación"
+"incluye el sidebar"
+"con la barra lateral"
+"implementa el header completo"
+"incluye toda la interfaz"
+"maqueta la página completa con navegación"
+```
+
+### 🎯 ENFOQUE POR DEFECTO
+
+**SIEMPRE concentrarse únicamente en**:
+1. **Contenido principal** del módulo específico
+2. **Formularios y campos** funcionales
+3. **Tablas y listados** de datos
+4. **Botones de acción** específicos del contenido
+5. **Estados y feedback** del contenido específico
+
+**NUNCA incluir por defecto**:
+1. Sidebar/Menu lateral
+2. TopBar/Header global  
+3. Tabs de navegación principal
+4. Breadcrumbs
+5. Botones de navegación global
+6. Elementos que permiten cambiar de vista/página
+
+---
+
+## ♿ REGLAS DE ACCESIBILIDAD Y PREVENCIÓN DE ERRORES DE LINT
+
+**OBLIGATORIO**: Seguir estas reglas para evitar errores de lint y garantizar accesibilidad web.
+
+### 🏷️ LABELS Y CONTROLES DE FORMULARIO
+
+#### **Regla: `lint/a11y/noLabelWithoutControl`**
+
+Todos los elementos `<label>` DEBEN estar correctamente asociados con un control de entrada.
+
+#### ✅ **CORRECTO: Asociación con htmlFor**
+```typescript
+// ✅ Usar htmlFor para asociar label con input
+const generateId = useId();
+
+<div>
+  <label htmlFor={generateId} className="block mb-1 text-sm font-medium text-foreground">
+    Teléfono <span className="text-danger">*</span>
+  </label>
+  <Phone
+    id={generateId}
+    label=""
+    required
+    value={form.phone}
+    onChange={(value) => handleChange("phone", value)}
+    error={false}
+    errorText=""
+  />
+</div>
+```
+
+#### ✅ **CORRECTO: Label envolvente**
+```typescript
+// ✅ Label que envuelve el input
+<label className="block mb-1 text-sm font-medium text-foreground">
+  Teléfono <span className="text-danger">*</span>
+  <Phone
+    label=""
+    required
+    value={form.phone}
+    onChange={(value) => handleChange("phone", value)}
+    error={false}
+    errorText=""
+  />
+</label>
+```
+
+#### ❌ **INCORRECTO: Label sin asociación**
+```typescript
+// ❌ NUNCA hacer esto - Label sin htmlFor ni envolviendo el input
+<div>
+  <label className="block mb-1 text-sm font-medium text-foreground">
+    Teléfono <span className="text-danger">*</span>
+  </label>
+  <Phone
+    label=""
+    required
+    value={form.phone}
+    onChange={(value) => handleChange("phone", value)}
+  />
+</div>
+```
+
+### 🎨 SVG Y ELEMENTOS GRÁFICOS
+
+#### **Regla: `lint/a11y/noSvgWithoutTitle`**
+
+Todos los elementos SVG DEBEN tener texto alternativo para accesibilidad.
+
+#### ✅ **CORRECTO: SVG con title**
+```typescript
+// ✅ SVG con title interno
+<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <title>Subir archivo</title>
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+</svg>
+```
+
+#### ✅ **CORRECTO: SVG con aria-label**
+```typescript
+// ✅ SVG con aria-label
+<svg 
+  fill="none" 
+  stroke="currentColor" 
+  viewBox="0 0 24 24"
+  aria-label="Subir archivo"
+  role="img"
+>
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+</svg>
+```
+
+#### ✅ **CORRECTO: SVG decorativo**
+```typescript
+// ✅ SVG puramente decorativo
+<svg 
+  fill="none" 
+  stroke="currentColor" 
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+>
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+</svg>
+```
+
+#### ❌ **INCORRECTO: SVG sin texto alternativo**
+```typescript
+// ❌ NUNCA hacer esto - SVG sin title, aria-label o aria-hidden
+<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+</svg>
+```
+
+### 🆔 GENERACIÓN DE IDs ÚNICOS
+
+**OBLIGATORIO**: Usar `useId()` de React para generar IDs únicos y asociar labels correctamente.
+
+```typescript
+import { useId } from "react";
+
+const MyComponent = () => {
+  const phoneId = useId();
+  const descriptionId = useId();
+  
+  return (
+    <div>
+      <label htmlFor={phoneId} className="block mb-1 text-sm font-medium text-foreground">
+        Teléfono <span className="text-danger">*</span>
+      </label>
+      <Phone
+        id={phoneId}
+        value={form.phone}
+        onChange={(value) => handleChange("phone", value)}
+      />
+      
+      <label htmlFor={descriptionId} className="block mb-1 text-sm font-medium text-foreground">
+        Descripción <span className="text-danger">*</span>
+      </label>
+      <Textarea
+        id={descriptionId}
+        value={form.description}
+        onChange={(e) => handleChange("description", e.target.value)}
+      />
+    </div>
+  );
+};
+```
+
+### 📋 COMPONENTES ESPECÍFICOS DEL PROYECTO
+
+#### **Phone Component**
+```typescript
+// ✅ Uso correcto del componente Phone
+const phoneId = useId();
+
+<div>
+  <label htmlFor={phoneId} className="block mb-1 text-sm font-medium text-foreground">
+    Teléfono <span className="text-danger">*</span>
+  </label>
+  <Phone
+    id={phoneId}
+    label=""  // Label vacío porque ya tenemos label externo
+    required
+    value={form.phone}
+    onChange={(value) => handleChange("phone", value)}
+    error={false}
+    errorText=""
+  />
+</div>
+```
+
+#### **Textarea Component**
+```typescript
+// ✅ Uso correcto del componente Textarea
+const textareaId = useId();
+
+<div>
+  <label htmlFor={textareaId} className="block mb-1 text-sm font-medium text-foreground">
+    Descripción del negocio <span className="text-danger">*</span>
+  </label>
+  <Textarea
+    id={textareaId}
+    placeholder="Describe tu negocio..."
+    value={form.description}
+    onChange={(e) => handleChange("description", e.target.value)}
+    variant="bordered"
+    radius="md"
+    size="lg"
+    minRows={3}
+    isRequired
+  />
+</div>
+```
+
+### 🔍 CHECKLIST DE ACCESIBILIDAD
+
+Antes de enviar código, verificar siempre:
+
+- [ ] **Labels**: Todos los `<label>` tienen `htmlFor` o envuelven el input
+- [ ] **SVGs**: Todos los SVG tienen `title`, `aria-label` o `aria-hidden="true"`
+- [ ] **IDs únicos**: Usar `useId()` para generar IDs únicos
+- [ ] **Campos requeridos**: Marcados con `aria-required="true"` o `required`
+- [ ] **Estados de error**: Usar `aria-invalid` y `aria-describedby` cuando sea necesario
+- [ ] **Roles**: Elementos interactivos tienen roles apropiados
+- [ ] **Contraste**: Colores cumplen con WCAG 2.1 AA
+- [ ] **Navegación por teclado**: Todos los elementos son accesibles por teclado
+
+---
+
+## 📝 React Hook Form: Controller vs Register
+
+**REGLA CRÍTICA**: Cuando se trabaje con React Hook Form y componentes custom (como los de `@beweco/aurora-ui` o `@/shared/ui/components`), **SIEMPRE** se debe usar `Controller` en lugar de `register()`.
+
+### 🎯 Cuándo Usar Controller vs Register
+
+#### **✅ Usar `Controller` (OBLIGATORIO para componentes custom)**
+
+Usar `Controller` cuando se trabaje con:
+- Componentes de `@beweco/aurora-ui` (`Input`, `Select`, `Phone`, `AutoComplete`, etc.)
+- Componentes de `@/shared/ui/components` (wrappers personalizados)
+- Cualquier componente que NO sea un input nativo de HTML
+- Componentes de terceros con APIs personalizadas
+
+**Razón**: Los componentes custom no manejan correctamente el spread de `register()` porque no son inputs nativos de HTML.
+
+#### **✅ Usar `register()` (Solo para inputs nativos HTML)**
+
+Usar `register()` directamente solo con:
+- `<input>` nativo de HTML
+- `<textarea>` nativo de HTML
+- `<select>` nativo de HTML
+
+### 📋 Implementación Correcta con Controller
+
+#### **Estructura Básica**
+
+```typescript
+import { Controller } from "react-hook-form";
+import { Input } from "@beweco/aurora-ui";
+
+const MyForm = () => {
+  const { control, handleSubmit, formState: { errors } } = useForm();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Controller
+        name="fieldName"
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            label="Campo"
+            placeholder="Ingresa un valor"
+            errorMessage={errors.fieldName?.message}
+            isInvalid={!!errors.fieldName}
+            isRequired
+          />
+        )}
+      />
+    </form>
+  );
+};
+```
+
+### ✅ Ejemplos Correctos
+
+#### **Ejemplo 1: Input Component**
+```typescript
+import { Controller } from "react-hook-form";
+import { Input } from "@beweco/aurora-ui";
+import { useTranslate } from "@tolgee/react";
+
+const BusinessForm = () => {
+  const { t } = useTranslate();
+  const { control, handleSubmit, formState: { errors } } = useForm();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Controller
+        name="name"
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            label={t("field_name")}
+            placeholder={t("placeholder_enter_name")}
+            errorMessage={errors.name?.message}
+            isInvalid={!!errors.name}
+            isRequired
+          />
+        )}
+      />
+
+      <Controller
+        name="email"
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            label={t("field_email")}
+            placeholder={t("placeholder_enter_email")}
+            errorMessage={errors.email?.message}
+            isInvalid={!!errors.email}
+            isRequired
+          />
+        )}
+      />
+    </form>
+  );
+};
+```
+
+#### **Ejemplo 2: Select Component**
+```typescript
+import { Controller } from "react-hook-form";
+import { Select, SelectItem } from "@beweco/aurora-ui";
+
+const UserForm = () => {
+  const { control, formState: { errors } } = useForm();
+
+  return (
+    <Controller
+      name="role"
+      control={control}
+      render={({ field }) => (
+        <Select
+          {...field}
+          label="Rol"
+          placeholder="Selecciona un rol"
+          errorMessage={errors.role?.message}
+          isInvalid={!!errors.role}
+        >
+          <SelectItem value="admin">Administrador</SelectItem>
+          <SelectItem value="user">Usuario</SelectItem>
+        </Select>
+      )}
+    />
+  );
+};
+```
+
+#### **Ejemplo 3: Phone Component**
+```typescript
+import { Controller } from "react-hook-form";
+import { Phone } from "@beweco/aurora-ui";
+
+const ContactForm = () => {
+  const { control, formState: { errors } } = useForm();
+
+  return (
+    <Controller
+      name="phone"
+      control={control}
+      render={({ field }) => (
+        <Phone
+          {...field}
+          label="Teléfono"
+          required
+          errorMessage={errors.phone?.message}
+          error={!!errors.phone}
+        />
+      )}
+    />
+  );
+};
+```
+
+#### **Ejemplo 4: Textarea Component**
+```typescript
+import { Controller } from "react-hook-form";
+import { Textarea } from "@beweco/aurora-ui";
+
+const DescriptionForm = () => {
+  const { control, formState: { errors } } = useForm();
+
+  return (
+    <Controller
+      name="description"
+      control={control}
+      render={({ field }) => (
+        <Textarea
+          {...field}
+          label="Descripción"
+          placeholder="Escribe una descripción..."
+          errorMessage={errors.description?.message}
+          isInvalid={!!errors.description}
+          minRows={3}
+          isRequired
+        />
+      )}
+    />
+  );
+};
+```
+
+### ❌ Ejemplos Incorrectos
+
+#### **❌ INCORRECTO: Usar register() con componentes custom**
+```typescript
+// ❌ NO HACER ESTO - El valor desaparecerá al hacer clic
+import { Input } from "@beweco/aurora-ui";
+
+const BadForm = () => {
+  const { register, formState: { errors } } = useForm();
+
+  return (
+    <Input
+      {...register("name")}  // ❌ Esto NO funciona con componentes custom
+      label="Nombre"
+      errorMessage={errors.name?.message}
+      isInvalid={!!errors.name}
+    />
+  );
+};
+```
+
+#### **❌ INCORRECTO: No usar el spread de field**
+```typescript
+// ❌ NO HACER ESTO - No conecta el campo con el formulario
+import { Controller } from "react-hook-form";
+import { Input } from "@beweco/aurora-ui";
+
+const BadForm = () => {
+  const { control } = useForm();
+
+  return (
+    <Controller
+      name="name"
+      control={control}
+      render={({ field }) => (
+        <Input
+          // ❌ No usar {...field}
+          value={field.value}  // ❌ Solo pasar value no es suficiente
+          onChange={field.onChange}  // ❌ Falta onBlur y ref
+          label="Nombre"
+        />
+      )}
+    />
+  );
+};
+```
+
+### 🔧 Integración en Custom Hooks
+
+**OBLIGATORIO**: Cuando se cree un hook personalizado para manejo de formularios, NO exportar `register`, solo `control`:
+
+#### ✅ **CORRECTO: Hook sin register**
+```typescript
+export const useBusinessInformationForm = ({ initialData }) => {
+  const { control, handleSubmit, formState: { errors, isDirty, isValid } } = useForm({
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: initialData?.name || "",
+      email: initialData?.email || "",
+    },
+  });
+
+  return {
+    control,  // ✅ Exportar control para usar con Controller
+    handleSubmit: handleSubmit(onSubmit),
+    errors,
+    isDirty,
+    isValid,
+  };
+};
+```
+
+#### ❌ **INCORRECTO: Hook con register**
+```typescript
+export const useBadForm = ({ initialData }) => {
+  const { control, register, handleSubmit, formState: { errors } } = useForm();
+
+  return {
+    control,
+    register,  // ❌ No exportar register
+    handleSubmit,
+    errors,
+  };
+};
+```
+
+### 📊 Comparación: register() vs Controller
+
+| Aspecto | `register()` | `Controller` |
+|---------|-------------|--------------|
+| **Inputs nativos HTML** | ✅ Funciona perfectamente | ✅ Funciona (innecesario) |
+| **Componentes custom** | ❌ NO funciona correctamente | ✅ Funciona perfectamente |
+| **Componentes Aurora UI** | ❌ NO funciona | ✅ OBLIGATORIO |
+| **Componentes @/shared** | ❌ NO funciona | ✅ OBLIGATORIO |
+| **Terceros con API custom** | ❌ NO funciona | ✅ OBLIGATORIO |
+| **Simplicidad** | ✅ Más simple | ⚠️ Más verboso |
+| **Control total** | ⚠️ Limitado | ✅ Control completo |
+
+### 🎯 Regla de Oro
+
+```
+¿Es un input nativo HTML (<input>, <textarea>, <select>)?
+├── SÍ → Puedes usar register()
+└── NO → DEBES usar Controller
+    ├── ¿Es de @beweco/aurora-ui? → Controller OBLIGATORIO
+    ├── ¿Es de @/shared/ui/components? → Controller OBLIGATORIO
+    └── ¿Es de terceros? → Controller OBLIGATORIO
+```
+
+### 🔍 Checklist de Validación
+
+Antes de crear un formulario, verificar:
+
+- [ ] **Componentes custom**: Todos usan `Controller` en lugar de `register()`
+- [ ] **Import correcto**: `import { Controller } from "react-hook-form"`
+- [ ] **Spread de field**: Todos los Controller usan `{...field}` en el componente
+- [ ] **Control exportado**: El hook personalizado exporta `control`, no `register`
+- [ ] **Errors manejados**: Todos los campos muestran `errorMessage` y `isInvalid`
+- [ ] **Traducciones**: Labels y placeholders usan `t()` de useTranslate
+- [ ] **Accesibilidad**: Labels asociados correctamente con `htmlFor` o envolventes
+
+### ⚠️ Problemas Comunes y Soluciones
+
+#### **Problema 1: El valor desaparece al hacer clic**
+```typescript
+// 🔴 PROBLEMA
+<Input {...register("name")} />
+
+// ✅ SOLUCIÓN
+<Controller
+  name="name"
+  control={control}
+  render={({ field }) => <Input {...field} />}
+/>
+```
+
+#### **Problema 2: El campo no se actualiza**
+```typescript
+// 🔴 PROBLEMA
+<Controller
+  name="name"
+  control={control}
+  render={({ field }) => (
+    <Input value={field.value} onChange={field.onChange} />
+  )}
+/>
+
+// ✅ SOLUCIÓN: Usar spread completo
+<Controller
+  name="name"
+  control={control}
+  render={({ field }) => <Input {...field} />}
+/>
+```
+
+#### **Problema 3: Validación no funciona**
+```typescript
+// 🔴 PROBLEMA: Falta mode: "onChange"
+const { control } = useForm({
+  resolver: zodResolver(schema),
+});
+
+// ✅ SOLUCIÓN: Añadir mode
+const { control } = useForm({
+  resolver: zodResolver(schema),
+  mode: "onChange",  // ✅ Validación en tiempo real
+});
+```
+
+---
+
+## 🔔 Manejo de Notificaciones y Feedback
+
+**OBLIGATORIO**: Para mostrar mensajes de éxito, error, advertencia o información al usuario, **SIEMPRE** se debe priorizar el uso de `showToast` de `useAuraToast` sobre otras formas de notificación (como `alert`, `console.log` para feedback visual, o componentes custom no estandarizados, excepto modales de éxito complejos que requieran pasos adicionales).
+
+### ✅ Uso Correcto de showToast
+
+```typescript
+import { useAuraToast } from "@beweco/aurora-ui";
+
+const MyComponent = () => {
+  const { showToast } = useAuraToast();
+  const { t } = useTranslate();
+
+  const handleAction = async () => {
+    try {
+      // ... acción ...
+      
+      // Éxito
+      showToast({
+        type: "success",
+        title: t("success_title"),
+        message: t("success_message"),
+      });
+    } catch (error) {
+      // Error
+      showToast({
+        type: "error",
+        title: t("error_title"),
+        message: error.message || t("error_generic"),
+      });
+    }
+  };
+};
+```
+
+**Tipos soportados**: `success`, `error`, `warning`, `info`, `danger`.
+
+---
+
+## Reglas de Uso del Framelink Figma MCP
+
+Cuando se utilice el flujo de trabajo **Framelink Figma MCP**, el modelo debe seguir esta secuencia obligatoria antes de iniciar cualquier desarrollo:
+
+### 1. **Extracción de Información del Diseño**
+
+#### Obtener Datos del Diseño de Figma
+```typescript
+// Usar la herramienta mcp_Framelink_Figma_MCP_get_figma_data
+// Parámetros requeridos:
+// - fileKey: Extraído de la URL de Figma (ej: figma.com/design/<fileKey>/...)
+// - nodeId: ID del nodo específico (opcional, si no se proporciona obtiene todo el archivo)
+// - depth: Profundidad del árbol de nodos (opcional, usar solo si es solicitado explícitamente)
+```
+
+#### Proceso de Análisis:
+1. **Extraer fileKey de la URL** proporcionada por el usuario
+2. **Identificar nodeId** si está presente en la URL como parámetro `node-id`
+3. **Ejecutar get_figma_data** para obtener la estructura del diseño
+4. **Analizar la respuesta** para identificar:
+   - Estructura de componentes y layout
+   - Jerarquía de elementos
+   - Propiedades visuales (colores, tipografías, espaciado)
+   - Imágenes e iconos necesarios
+5. **FILTRAR elementos de navegación** según las reglas de exclusión
+
+### 2. **Descarga de Recursos Visuales**
+
+#### Descargar Imágenes SVG y PNG
+```typescript
+// Usar la herramienta mcp_Framelink_Figma_MCP_download_figma_images
+// Parámetros requeridos:
+// - fileKey: Mismo fileKey del diseño
+// - nodes: Array de objetos con nodeId, fileName e imageRef
+// - localPath: Ruta absoluta donde guardar las imágenes
+// - pngScale: Escala para imágenes PNG (default: 2)
+// - svgOptions: Opciones para exportación SVG
+```
+
+#### Directorio de Imágenes:
+- **Ruta estándar**: `src/shared/assets/images/` (relativa al root del proyecto)
+- **Nomenclatura**: Usar nombres descriptivos relacionados con el componente
+- **Formatos soportados**: SVG (preferido para iconos), PNG (para imágenes complejas)
+
+### 3. **Proceso de Desarrollo Alineado con Vertical Slice Architecture**
+
+Una vez recopilada toda la información del módulo, el desarrollo debe seguir estas fases:
+
+#### **Fase 1: Análisis del Diseño**
+- Identificar la estructura visual del componente/página
+- **FILTRAR elementos de navegación** según reglas de exclusión
+- Mapear elementos a componentes atómicos existentes en `@/shared/ui/components`
+- Identificar nuevos componentes que necesitan ser creados
+- Planificar la composición componentes
+
+#### **Fase 2: Desarrollo de Componentes UI (Adaptadores)**
+- **Componentes base**: Elementos reutilizables siguiendo las reglas de HeroUI y BeweOS
+- **Componentes compuestos**: Combinaciones simples de componentes base
+- **Componentes complejos**: Interfaces que combinan múltiples componentes
+- **Páginas**: Estructuras completas que definen vistas del slice
+
+#### **Fase 3: Implementación de Puertos y Servicios**
+- Crear hooks que actúen como adaptadores hacia la capa de aplicación
+- Implementar servicios que manejen la lógica de negocio
+- Definir interfaces (puertos) para la comunicación entre capas
+
+#### **Fase 4: Creación Automática de Locales (OBLIGATORIO)**
+- **CREAR automáticamente** el archivo de locales correspondiente en **ES** (español)
+- **Configurar @tolgee/react** si es la primera implementación de locales
+- **Extraer todos los textos** del diseño de Figma implementado
+- **Aplicar estructura snake_case correcta**: `{category}_{element}` para common.json, `{module}_{subpage}_{key}` para módulos específicos
+- **Ubicar archivos** en la estructura correcta de directorios
+- **Implementar useTranslate** en lugar de texto hardcodeado
+
+#### **Fase 5: Integración y Validación**
+- Integrar componentes UI con servicios de aplicación
+- Validar comportamiento responsivo según breakpoints BeweOS
+- Probar interacciones y estados según el diseño de Figma
+- Verificar accesibilidad y soporte para modo oscuro
+
+### 4. **Reglas Específicas para Framelink MCP**
+
+#### **Extracción de fileKey y nodeId**
+```typescript
+// URL de ejemplo: https://www.figma.com/design/YzPA2svsReSL69nqysypfd/FINALIZADO-Configuración-Agencies-BeweOS?node-id=177-16027&m=dev
+// fileKey: "YzPA2svsReSL69nqysypfd"
+// nodeId: "177-16027"
+```
+
+#### **Manejo de Imágenes**
+- **SVG**: Preferir para iconos y elementos gráficos simples
+- **PNG**: Usar para imágenes complejas o fotografías
+- **Optimización**: Usar `pngScale: 2` para retina displays
+- **SVG Options**: Mantener configuración por defecto salvo requerimiento específico
+
+#### **Fidelidad al Diseño**
+- **OBLIGATORIO**: Implementar con **fidelidad total** al diseño de Figma
+- **FILTRAR**: Elementos de navegación según reglas de exclusión
+- **Priorizar**: Componentes existentes en `@/shared/ui/components`
+- **Fallback**: Usar HeroUI si no existe el componente personalizado
+- **Último recurso**: Crear componente desde cero con Tailwind CSS
+
+### 5. **Creación Automática de Locales (OBLIGATORIO)**
+
+**REGLA CRÍTICA**: Cuando se implemente cualquier diseño desde Figma, **SIEMPRE** se debe crear automáticamente el archivo de locales correspondiente en español (ES), siguiendo las reglas de separación entre elementos comunes y específicos del módulo.
+
+##### **1. Separación Fundamental: common.json vs [module].json**
+
+**PRINCIPIO DE ORO**: Si un texto se puede usar en más de un módulo sin cambios, **DEBE** ir en `common.json`.
+
+###### **Marco de Decisión:**
+```
+¿Este texto exacto puede usarse en otro módulo?
+├── SÍ → common.json (formato: {category}_{element})
+├── POSIBLEMENTE → common.json (preferir reutilización)
+└── NO (claramente específico) → [module].json (formato: {module}_{subpage}_{key})
+```
+
+##### **2. Estructura de Naming Snake_Case**
+
+###### **Para common.json (Elementos Reutilizables):**
+**Formato**: `{category}_{element}`
+
+**Categorías Obligatorias:**
+
+**🔘 BOTONES (Acciones Genéricas):**
+```json
+{
+  "button_save": "Guardar",
+  "button_cancel": "Cancelar",
+  "button_edit": "Editar",
+  "button_delete": "Eliminar",
+  "button_create": "Crear",
+  "button_update": "Actualizar",
+  "button_reset": "Restablecer",
+  "button_close": "Cerrar",
+  "button_confirm": "Confirmar",
+  "button_continue": "Continuar",
+  "button_back": "Atrás",
+  "button_next": "Siguiente",
+  "button_finish": "Finalizar",
+  "button_send": "Enviar",
+  "button_upload": "Subir",
+  "button_download": "Descargar",
+  "button_export": "Exportar",
+  "button_import": "Importar",
+  "button_search": "Buscar",
+  "button_filter": "Filtrar",
+  "button_clear": "Limpiar",
+  "button_refresh": "Actualizar"
+}
+```
+
+**🔘 CAMPOS DE FORMULARIO (Labels Genéricos):**
+```json
+{
+  "field_name": "Nombre",
+  "field_email": "Correo electrónico",
+  "field_phone": "Teléfono",
+  "field_city": "Ciudad",
+  "field_country": "País",
+  "field_address": "Dirección",
+  "field_role": "Rol",
+  "field_language": "Idioma",
+  "field_password": "Contraseña",
+  "field_confirm_password": "Confirmar contraseña",
+  "field_date": "Fecha",
+  "field_time": "Hora",
+  "field_description": "Descripción",
+  "field_comments": "Comentarios",
+  "field_status": "Estado",
+  "field_type": "Tipo",
+  "field_category": "Categoría"
+}
+```
+
+**🔘 PLACEHOLDERS (Hints Genéricos):**
+```json
+{
+  "placeholder_enter_name": "Ingresa tu nombre",
+  "placeholder_enter_email": "Ingresa tu correo electrónico",
+  "placeholder_select_city": "Selecciona una ciudad",
+  "placeholder_select_role": "Selecciona un rol",
+  "placeholder_select_language": "Selecciona un idioma",
+  "placeholder_enter_password": "Ingresa tu contraseña",
+  "placeholder_search": "Buscar...",
+  "placeholder_optional": "Opcional",
+  "placeholder_select_option": "Selecciona una opción"
+}
+```
+
+**🔘 ROLES DEL SISTEMA (Aplicación Completa):**
+```json
+{
+  "role_admin": "Administrador",
+  "role_user": "Usuario",
+  "role_editor": "Editor",
+  "role_viewer": "Visualizador",
+  "role_moderator": "Moderador",
+  "role_manager": "Gerente"
+}
+```
+
+**🔘 DATOS GEOGRÁFICOS:**
+```json
+{
+  "city_bogota": "Bogotá",
+  "city_medellin": "Medellín",
+  "city_cali": "Cali",
+  "city_barranquilla": "Barranquilla",
+  "city_cartagena": "Cartagena",
+  "country_colombia": "Colombia",
+  "country_venezuela": "Venezuela",
+  "country_ecuador": "Ecuador"
+}
+```
+
+**🔘 IDIOMAS DEL SISTEMA:**
+```json
+{
+  "language_spanish": "Español",
+  "language_english": "Inglés",
+  "language_portuguese": "Portugués"
+}
+```
+
+**🔘 ESTADOS Y MENSAJES COMUNES:**
+```json
+{
+  "status_active": "Activo",
+  "status_inactive": "Inactivo",
+  "status_pending": "Pendiente",
+  "status_completed": "Completado",
+  "status_cancelled": "Cancelado",
+  "message_loading": "Cargando...",
+  "message_success": "Éxito",
+  "message_error": "Error",
+  "message_no_data": "No hay datos disponibles",
+  "message_confirm_delete": "¿Estás seguro de que quieres eliminar este elemento?"
+}
+```
+
+**🔘 VALIDACIONES GENÉRICAS:**
+```json
+{
+  "validation_required": "Este campo es obligatorio",
+  "validation_invalid_email": "El correo electrónico no es válido",
+  "validation_min_length": "Mínimo {count} caracteres",
+  "validation_max_length": "Máximo {count} caracteres",
+  "validation_passwords_not_match": "Las contraseñas no coinciden"
+}
+```
+
+###### **Para Archivos Específicos del Módulo:**
+**Formato**: `{module}_{subpage}_{key}`
+
+**Qué va en [module].json:**
+
+**🔘 TÍTULOS ESPECÍFICOS DEL MÓDULO:**
+- Section headers únicos de esa funcionalidad
+- Page titles específicos del feature
+- Workflow step titles
+
+**🔘 DESCRIPCIONES CONTEXTUALES:**
+- Help text específico de esa característica  
+- Feature-specific explanations
+- Module workflow descriptions
+
+**🔘 ACCIONES ESPECIALIZADAS:**
+- Botones con funcionalidad específica del módulo
+- Actions que solo tienen sentido en ese contexto
+
+**🔘 ESTADOS ESPECÍFICOS DE LA FUNCIONALIDAD:**
+- Empty states únicos del módulo
+- Success/error messages con contexto específico
+- Module-specific status indicators
+
+**Ejemplos por Módulo:**
+
+**Settings Module (`settings.json`):**
+```json
+{
+  "settings_profile_information_title": "Información Personal",
+  "settings_profile_information_description": "Actualiza tu información personal y de contacto",
+  "settings_profile_appearance_title": "Apariencia",
+  "settings_profile_appearance_description": "Personaliza cómo se ve la aplicación para ti",
+  "settings_profile_password_title": "Contraseña",
+  "settings_profile_password_description": "Gestiona la seguridad de tu cuenta",
+  "settings_profile_password_reset_button": "Restablecer contraseña",
+  "settings_profile_language_title": "Idioma e Internacionalización",
+  "settings_profile_language_description": "Selecciona tu idioma preferido para la interfaz",
+  "settings_profile_language_interface_label": "Idioma de la interfaz"
+}
+```
+
+**Users Module (`users.json`):**
+```json
+{
+  "users_table_team_title": "Usuarios del equipo",
+  "users_table_empty_state": "No hay usuarios registrados en su equipo",
+  "users_invite_success_message": "La invitación se envió correctamente",
+  "users_table_filter_placeholder": "Buscar usuarios...",
+  "users_details_last_access": "Último acceso",
+  "users_invite_form_title": "Invitar nuevo usuario",
+  "users_invite_form_description": "Envía una invitación para unirse al equipo"
+}
+```
+
+**Menu Module (`menu.json`):**
+```json
+{
+  "menu_dashboard": "Dashboard",
+  "menu_profile": "Perfil",  
+  "menu_users": "Usuarios",
+  "menu_settings": "Configuración",
+  "menu_reports": "Reportes",
+  "menu_logout": "Cerrar sesión"
+}
+```
+
+##### **3. Estructura de Directorios**
+
+**UBICACIÓN OBLIGATORIA**: `src/locales/es/[modulo].json`
+
+```
+src/
+└── locales/
+    └── es/                     # Español (ES)
+        ├── common.json         # ⭐ ELEMENTOS REUTILIZABLES ÚNICAMENTE
+        ├── settings.json       # Solo elementos específicos de settings
+        ├── users.json          # Solo elementos específicos de users  
+        ├── dashboard.json      # Solo elementos específicos de dashboard
+        ├── profile.json        # Solo elementos específicos de profile
+        ├── menu.json          # Solo elementos específicos de menu
+        └── [modulo].json      # Solo elementos específicos del módulo
+```
+
+##### **4. Proceso de Extracción de Textos**
+
+Al implementar un diseño de Figma, identificar **TODOS** los textos y categorizarlos:
+
+###### **Textos que VAN a common.json:**
+- ✅ Botones genéricos: "Guardar", "Cancelar", "Editar", "Eliminar"
+- ✅ Labels de campos estándar: "Nombre", "Email", "Teléfono", "Ciudad"
+- ✅ Placeholders genéricos: "Ingresa tu nombre", "Selecciona una ciudad"
+- ✅ Roles: "Administrador", "Usuario", "Editor"
+- ✅ Ciudades: "Bogotá", "Medellín", "Cali"
+- ✅ Idiomas: "Español", "Inglés"
+- ✅ Estados: "Activo", "Inactivo", "Pendiente"
+- ✅ Mensajes comunes: "Cargando...", "Error", "Éxito"
+- ✅ Validaciones: "Campo obligatorio", "Email inválido"
+
+###### **Textos que VAN a [module].json:**
+- ✅ Títulos específicos: "Configuración de Perfil", "Gestión de Usuarios"
+- ✅ Descripciones contextuales: "Administra los permisos de tu equipo"
+- ✅ Botones especializados: "Restablecer contraseña", "Enviar invitación"
+- ✅ Estados específicos: "No hay usuarios en tu equipo"
+- ✅ Mensajes contextuales: "La invitación se envió correctamente"
+- ✅ Labels específicos: "Idioma de la interfaz"
+
+##### **5. Implementación en Componentes React**
+
+**OBLIGATORIO**: Usar implementación mixta, priorizando `common.json` para elementos reutilizables:
+
+```typescript
+// ✅ CORRECTO: Implementación que prioriza common.json
+import { useTranslate } from "@tolgee/react";
+
+const SettingsProfile = () => {
+  const { t } = useTranslate();
+  
+  return (
+    <div>
+      {/* Títulos específicos del módulo - desde settings.json */}
+      <h1>{t('settings_profile_information_title')}</h1>
+      <p>{t('settings_profile_information_description')}</p>
+      
+      <form>
+        {/* Campos genéricos - desde common.json */}
+        <label>{t('field_name')}</label>
+        <Input placeholder={t('placeholder_enter_name')} />
+        
+        <label>{t('field_email')}</label>
+        <Input placeholder={t('placeholder_enter_email')} />
+        
+        <label>{t('field_city')}</label>
+        <Select placeholder={t('placeholder_select_city')}>
+          {/* Ciudades desde common.json */}
+          <SelectItem value="bogota">{t('city_bogota')}</SelectItem>
+          <SelectItem value="medellin">{t('city_medellin')}</SelectItem>
+        </Select>
+        
+        <label>{t('field_role')}</label>
+        <Select placeholder={t('placeholder_select_role')}>
+          {/* Roles desde common.json */}
+          <SelectItem value="admin">{t('role_admin')}</SelectItem>
+          <SelectItem value="user">{t('role_user')}</SelectItem>
+        </Select>
+        
+        {/* Botones genéricos - desde common.json */}
+        <Button type="submit">{t('button_save')}</Button>
+        <Button variant="light">{t('button_cancel')}</Button>
+      </form>
+      
+      {/* Sección específica del módulo - desde settings.json */}
+      <h2>{t('settings_profile_appearance_title')}</h2>
+      <p>{t('settings_profile_appearance_description')}</p>
+      
+      {/* Label específico del módulo - desde settings.json */}
+      <label>{t('settings_profile_language_interface_label')}</label>
+      <Select placeholder={t('placeholder_select_language')}>
+        {/* Idiomas desde common.json */}
+        <SelectItem value="es">{t('language_spanish')}</SelectItem>
+        <SelectItem value="en">{t('language_english')}</SelectItem>
+      </Select>
+      
+      {/* Botón específico del módulo - desde settings.json */}
+      <Button>{t('settings_profile_password_reset_button')}</Button>
+    </div>
+  );
+};
+
+// ✅ CORRECTO: Tabla de usuarios con máxima reutilización
+const UsersTable = () => {
+  const { t } = useTranslate();
+  
+  return (
+    <div>
+      {/* Título específico - desde users.json */}
+      <h1>{t('users_table_team_title')}</h1>
+      
+      <Table>
+        <TableHeader>
+          {/* Headers genéricos - desde common.json */}
+          <TableColumn>{t('field_name')}</TableColumn>
+          <TableColumn>{t('field_email')}</TableColumn>
+          <TableColumn>{t('field_role')}</TableColumn>
+          <TableColumn>Acciones</TableColumn>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell>Juan Pérez</TableCell>
+            <TableCell>juan@example.com</TableCell>
+            <TableCell>{t('role_admin')}</TableCell>
+            <TableCell>
+              {/* Acciones genéricas - desde common.json */}
+              <Button size="sm">{t('button_edit')}</Button>
+              <Button size="sm" color="danger">{t('button_delete')}</Button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      
+      {/* Estado específico - desde users.json */}
+      <p>{t('users_table_empty_state')}</p>
+      
+      {/* Mensaje específico - desde users.json */}
+      <Alert>{t('users_invite_success_message')}</Alert>
+    </div>
+  );
+};
+
+// ❌ INCORRECTO: Duplicando elementos que deberían estar en common.json
+const BadComponent = () => {
+  const { t } = useTranslate();
+  
+  return (
+    <div>
+      {/* ❌ NO hacer esto - elementos que deberían ser comunes */}
+      <Button>{t('users_save_button')}</Button>        // Debería usar button_save
+      <Input label={t('users_name_field')} />         // Debería usar field_name
+      <Input label={t('users_email_field')} />        // Debería usar field_email
+      
+      {/* ❌ NO hacer esto - texto hardcodeado */}
+      <Button>Guardar</Button>                        // Debería usar t('button_save')
+      <label>Nombre</label>                           // Debería usar t('field_name')
+    </div>
+  );
+};
+```
+
+##### **6. Configuración de @tolgee/react**
+
+Si es la primera implementación de locales en el proyecto:
+
+###### **Instalación:**
+```bash
+npm install @tolgee/react
+# o  
+yarn add @tolgee/react
+```
+
+###### **Configuración en el punto de entrada (App.tsx o main.tsx):**
+```typescript
+import { TolgeeProvider, DevTools, Tolgee, FormatSimple } from '@tolgee/react';
+
+// Importar traducciones
+import esTranslations from './src/locales/es/common.json';
+import enTranslations from './src/locales/en/common.json';
+
+// Configuración
+const tolgee = Tolgee()
+  .use(DevTools())
+  .use(FormatSimple())
+  .init({
+    language: 'es',
+    apiUrl: process.env.REACT_APP_TOLGEE_API_URL,
+    apiKey: process.env.REACT_APP_TOLGEE_API_KEY,
+    staticData: {
+      es: esTranslations,
+      en: enTranslations,
+    },
+    fallbackLanguage: 'es',
+  });
+
+function App() {
+  return (
+    <TolgeeProvider tolgee={tolgee} fallback="Cargando traducciones...">
+      {/* Tu aplicación */}
+    </TolgeeProvider>
+  );
+}
+```
+
+##### **7. Checklist de Validación**
+
+Antes de completar la implementación, verificar:
+
+**Separación Correcta:**
+- [ ] **common.json existe** y contiene solo elementos reutilizables
+- [ ] **Elementos genéricos** (botones, campos, placeholders, roles, ciudades) están en common.json
+- [ ] **Elementos específicos** están en `src/locales/es/[modulo].json`
+- [ ] **NO hay duplicación** entre common.json y archivos específicos
+
+**Formato Correcto:**
+- [ ] **common.json usa formato**: `{category}_{element}`
+- [ ] **[module].json usa formato**: `{module}_{subpage}_{key}`
+- [ ] **Todos los keys en snake_case**
+
+**Completitud:**
+- [ ] **Todos los textos** del diseño Figma están incluidos
+- [ ] **Sin texto hardcodeado** en componentes
+- [ ] **useTranslate implementado** correctamente
+- [ ] **Implementación mixta** (common + específico) en componentes
+
+**Calidad:**
+- [ ] **Traduciones en español formal** y profesional
+- [ ] **Consistencia** en terminología
+- [ ] **Contexto apropiado** para cada traducción
+
+##### **8. Anti-patrones que EVITAR**
+
+```typescript
+// ❌ NUNCA hacer esto:
+
+// Duplicar elementos comunes en archivos específicos
+{
+  "settings_save_button": "Guardar",     // Usar button_save de common
+  "settings_name_field": "Nombre",      // Usar field_name de common
+  "users_save_button": "Guardar",       // Usar button_save de common
+  "users_admin_role": "Admin"           // Usar role_admin de common
+}
+
+// Texto hardcodeado en componentes
+<Button>Guardar</Button>                // Usar t('button_save')
+<label>Nombre</label>                   // Usar t('field_name')
+
+// Formato incorrecto de keys
+{
+  "settingsProfileTitle": "...",         // camelCase
+  "settings-profile-title": "...",       // kebab-case
+  "settings.profile.title": "..."        // dot notation
+}
+
+// Solo usar elementos específicos cuando existe común
+<Button>{t('settings_edit_button')}</Button>  // Usar t('button_edit')
+<Input label={t('users_email_label')} />      // Usar t('field_email')
+```
+**OBJETIVO FINAL**: Máxima reutilización de traducciones, consistencia en toda la aplicación, y separación clara entre elementos comunes y específicos del módulo. 

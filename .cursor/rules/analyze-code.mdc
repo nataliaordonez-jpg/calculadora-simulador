@@ -1,0 +1,279 @@
+---
+description: Metodología general de análisis de código para cualquier base de código o proyecto de programación
+alwaysApply: false
+triggerPatterns: ["analyze code", "code analysis", "codebase analysis", "code review", "código", "code", "implementación", "backend", "arquitectura", "technical", "codebase", "programming"]
+context: "Metodología general para el análisis integral de bases de código"
+---
+
+# Reglas Generales de Análisis de Código
+
+## Prerrequisitos y Configuración
+
+### **Paso 1: Ubicación y Contexto de la Base de Código**
+
+Antes de comenzar cualquier análisis de código, el agente DEBE preguntar al usuario:
+
+1. **"¿Cuál es la ruta del directorio principal del código que debo analizar?"**
+   - Ruta completa al directorio del proyecto
+   - Estructura de carpetas relevante
+   - Archivos de configuración importantes
+
+2. **"¿Qué tipo de proyecto/tecnología estoy analizando?"**
+   - Lenguaje/framework principal (React, Node.js, Python, etc.)
+   - Arquitectura general (monolito, microservicios, SPA, etc.)
+   - Dependencias y herramientas principales
+
+3. **"¿Cuáles son los archivos o módulos más críticos que debo priorizar?"**
+   - Puntos de entrada de la aplicación (Entry points)
+   - Archivos de lógica de negocio central (Core)
+   - Archivos de configuración importantes
+   - Áreas de mayor complejidad
+
+### **Paso 2: Descubrimiento de Contexto y Mejora de Reglas**
+
+Una vez recopilada la información básica, el agente DEBE:
+
+1. **Explorar la estructura de la base de código** para entender:
+   - Patrones de organización de directorios
+   - Convenciones de nomenclatura de archivos
+   - Patrones de importación/exportación
+   - Archivos de configuración y sus propósitos
+
+2. **Si existen reglas específicas del producto**: Usarlas como PRINCIPALES, mejorar basado en el análisis general.
+3. **Si no existen reglas específicas del producto**: Usar esta metodología general + crear sugerencias para reglas específicas del producto.
+
+## Metodología General de Análisis
+
+### **Fase 1: Análisis Estructural**
+
+#### **1.1 Mapeo de Directorios**
+- **Mapear estructura completa de directorios**: Entender patrones organizacionales
+- **Identificar tipos de archivos clave**: Componentes, servicios, modelos, utilidades
+- **Documentar relaciones de archivos**: Importaciones, dependencias, conexiones de módulos
+- **Encontrar archivos de configuración**: Package.json, webpack, archivos env, etc.
+
+#### **1.2 Análisis de Dependencias**
+- **Dependencias externas**: Librerías de terceros y sus propósitos
+- **Dependencias internas**: Cómo los módulos dependen unos de otros
+- **Dependencias circulares**: Identificar y documentar problemas potenciales
+- **Dependencias no utilizadas**: Código muerto y oportunidades de optimización
+
+### **Fase 2: Análisis de Patrones de Código**
+
+#### **2.1 Patrones Arquitectónicos**
+- **Patrones de diseño**: Observer, Factory, Singleton, etc.
+- **Patrones arquitectónicos**: Capas, hexagonal, microservicios
+- **Organización del código**: Separación de preocupaciones, modularidad
+- **Patrones de manejo de errores**: Try/catch, límites de error (error boundaries), logging
+
+#### **2.2 Evaluación de Calidad de Código**
+- **Complejidad del código**: Complejidad ciclomática, niveles de anidamiento
+- **Reutilización de código**: Principios DRY, utilidades compartidas
+- **Cobertura de pruebas**: Pruebas unitarias, pruebas de integración, pruebas e2e
+- **Calidad de documentación**: Comentarios, README, docs inline
+
+### **Fase 3: Extracción de Lógica de Negocio y Experiencia de Usuario**
+
+#### **3.1 Identificación de Funcionalidad Central**
+- **Procesos de negocio principales**: Flujos de trabajo y operaciones clave
+- **Transformaciones de datos**: Cómo fluyen y cambian los datos
+- **Reglas de negocio**: Validaciones, restricciones, políticas
+- **Puntos de integración**: APIs externas, bases de datos, servicios
+
+#### **3.2 Análisis de Gestión de Estado**
+- **Almacenamiento de estado**: Estado local, estado global, persistencia
+- **Mutaciones de estado**: Cómo cambia el estado con el tiempo
+- **Efectos secundarios**: Llamadas de red, logging, notificaciones
+- **Sincronización de estado**: Actualizaciones en tiempo real, caché
+
+#### **3.3 Análisis de Flujo de Usuario desde el Código**
+- **Patrones de enrutamiento frontend**: Cómo navegan los usuarios entre pantallas/páginas
+- **Lógica de manejo de formularios**: Validación de entrada, flujos de envío, manejo de errores
+- **Flujos de modales/popups**: Cuándo y cómo se activan las superposiciones
+- **Procesos de múltiples pasos**: Wizards, flujos de pago, secuencias de configuración
+- **Persistencia de estado del usuario**: Sesiones de inicio de sesión, preferencias, datos borradores
+
+#### **3.4 Evaluación de Implementación de UX**
+- **UX de manejo de errores**: Cómo se presentan los errores a los usuarios
+- **Estados de carga**: Cómo la aplicación comunica el procesamiento a los usuarios
+- **Mecanismos de retroalimentación**: Mensajes de éxito, indicadores de progreso, confirmaciones
+- **Implementación de accesibilidad**: Etiquetas ARIA, navegación por teclado, soporte para lectores de pantalla
+- **Responsividad móvil**: Patrones de diseño responsivo, interacciones táctiles
+
+### **Fase 4: Documentación Técnica**
+
+#### **4.1 Documentación de API**
+- **Mapeo de endpoints**: Todas las rutas de API y sus propósitos
+- **Esquemas de solicitud/respuesta**: Estructuras de datos y validación
+- **Autenticación/autorización**: Patrones de seguridad e implementación
+- **Manejo de errores**: Códigos de error, mensajes, recuperación
+
+#### **4.2 Documentación de Modelo de Datos**
+- **Relaciones de entidades**: Esquemas de base de datos, relaciones de objetos
+- **Validación de datos**: Validación de entrada, cumplimiento de reglas de negocio
+- **Flujo de datos**: Desde la entrada hasta el almacenamiento y la salida
+- **Consideraciones de rendimiento**: Consultas, índices, optimización
+
+## Requisitos de Documentación
+
+### **Entregables Requeridos**
+
+#### **1. Resumen Ejecutivo (`01_Executive_Summary_TEXT.md`)**
+- Visión general de arquitectura de alto nivel
+- Tecnologías clave y patrones utilizados
+- Capacidades de negocio principales
+- Hallazgos críticos y recomendaciones
+
+#### **2. Estructura de la Base de Código (`02_Codebase_Structure_TEXT.md`)**
+- Árbol de directorios completo con explicaciones
+- Patrones de organización de archivos
+- Gráfico de dependencias de módulos
+- Visión general de configuración
+
+#### **3. Análisis de Lógica de Negocio (`03_Business_Logic_Analysis_TEXT.md`)**
+- Desglose de funcionalidad central
+- Reglas de negocio y validaciones
+- Documentación de flujo de datos
+- Análisis de puntos de integración
+
+#### **4. Arquitectura Técnica (`04_Technical_Architecture_TEXT.md`)**
+- Patrones de diseño y decisiones arquitectónicas
+- Diseño e implementación de API
+- Diseño de base de datos y modelado de datos
+- Consideraciones de rendimiento y escalabilidad
+
+#### **5. Evaluación de Calidad de Código (`05_Code_Quality_Assessment_TEXT.md`)**
+- Análisis de complejidad de código
+- Cobertura y calidad de pruebas
+- Consideraciones de seguridad
+- Evaluación de mantenibilidad
+
+#### **6. Análisis de Experiencia de Usuario (`06_UX_Analysis_TEXT.md`)**
+- Análisis de implementación de flujo de usuario desde la perspectiva del código
+- Patrones de UX frontend y mapeo de viaje del usuario
+- Análisis de manejo de errores y mecanismos de retroalimentación
+- Responsividad móvil e implementación de accesibilidad
+
+#### **7. Documentación de Flujo de Usuario (`07_User_Flows_MERMAID.md`)**
+- Flujos de usuario completos extraídos de la lógica de enrutamiento y componentes
+- Documentación de procesos de múltiples pasos con diagramas Mermaid
+- Flujos de trabajo de formularios y secuencias de validación
+- Patrones de interacción de modales y popups
+
+#### **8. Documentación Visual (`08_Architecture_Diagrams_MERMAID.md`)**
+- Diagramas de arquitectura del sistema
+- Diagramas de flujo de datos
+- Diagramas de relación de componentes
+- Diagramas de secuencia para procesos clave
+
+#### **9. Hoja de Ruta de Mejora (`09_Improvement_Roadmap_TEXT.md`)**
+- Recomendaciones de refactorización
+- Oportunidades de optimización de rendimiento
+- Mejoras de seguridad
+- Sugerencias de modernización
+
+### **Organización de Archivos**
+```
+/Analisis/[Producto]/[AAAA-MM-DD]/Code_Analysis/
+├── 01_Executive_Summary_TEXT.md
+├── 02_Codebase_Structure_TEXT.md
+├── 03_Business_Logic_Analysis_TEXT.md
+├── 04_Technical_Architecture_TEXT.md
+├── 05_Code_Quality_Assessment_TEXT.md
+├── 06_UX_Analysis_TEXT.md
+├── 07_User_Flows_MERMAID.md
+├── 08_Architecture_Diagrams_MERMAID.md
+├── 09_Improvement_Roadmap_TEXT.md
+└── Product_Specific_Context/
+    ├── Key_Files_Analysis_TEXT.md
+    ├── Critical_Patterns_TEXT.md
+    └── Domain_Specific_Rules_TEXT.md
+```
+
+## Integración con Reglas de Producto
+
+### **Cuando Existen Reglas Específicas del Producto**
+- **Usar reglas de producto como PRINCIPALES** para análisis específico del dominio
+- **Aplicar esta regla como SECUNDARIA** para calidad general de código y arquitectura
+- **Cruzar hallazgos** entre análisis específico del producto y general
+- **Mejorar reglas de producto** basado en insights del análisis general
+
+### **Cuando No Existen Reglas Específicas del Producto**
+- **Usar esta regla como PRINCIPAL** para análisis integral
+- **Crear sugerencias** para futuras reglas específicas del producto
+- **Documentar patrones de dominio** que podrían codificarse en reglas específicas
+
+### **Protocolo de Mejora de Reglas**
+- **Identificar patrones específicos del dominio** que se repiten en proyectos similares
+- **Sugerir creación** de reglas `analyze_code_product_[dominio].mdc`
+- **Documentar oportunidades de mejora** para reglas de producto existentes
+
+## Preservación de Contexto para Reglas Específicas del Producto
+
+### **Información a Capturar para `analyze_code_product_[nombre].mdc`**
+
+#### **1. Contexto de Estructura del Proyecto**
+- **Directorios principales**: Dónde vive la funcionalidad central
+- **Patrones de nomenclatura de archivos**: Convenciones usadas en el proyecto
+- **Patrones de importación**: Cómo se referencian los módulos entre sí
+- **Ubicaciones de configuración**: Dónde se definen configuraciones y vars de entorno
+
+#### **2. Contexto de Stack Técnico**
+- **Detalles del framework**: Versión, plugins clave, decisiones arquitectónicas
+- **Patrones de base de datos**: ORM usado, patrones de migración, estructuras de consulta
+- **Patrones de API**: REST/GraphQL, autenticación, stack de middleware
+- **Patrones frontend**: Gestión de estado, arquitectura de componentes, enrutamiento
+
+#### **3. Contexto de Dominio de Negocio**
+- **Entidades centrales**: Objetos de negocio principales y sus relaciones
+- **Procesos clave**: Flujos de trabajo críticos y sus implementaciones
+- **Reglas de validación**: Restricciones de negocio y su cumplimiento
+- **Requisitos de integración**: Servicios externos y sus patrones de uso
+
+#### **4. Patrones de Desarrollo**
+- **Organización de código**: Cómo se estructuran las features
+- **Patrones de prueba**: Organización de archivos de prueba, utilidades de prueba
+- **Procesos de construcción**: Cómo se construye y despliega la aplicación
+- **Manejo de errores**: Patrones de logging, monitoreo, recuperación de errores
+
+#### **5. Patrones de Flujo de Usuario**
+- **Patrones de navegación**: Enrutamiento común y lógica de transición de página
+- **Patrones de flujo de formularios**: Formularios de múltiples pasos y secuencias de validación
+- **Patrones de persistencia de estado**: Cómo se mantienen los datos del usuario y el estado de la sesión
+- **Patrones de interacción en tiempo real**: Actualizaciones en vivo, notificaciones, características en tiempo real
+
+## Estándares de Calidad
+
+### **Criterios de Completitud del Análisis**
+- ✅ Cada archivo crítico analizado y documentado
+- ✅ Todos los procesos de negocio principales mapeados
+- ✅ Gráfico de dependencias completo creado
+- ✅ Todos los endpoints de API documentados
+- ✅ Esquema de base de datos completamente entendido
+- ✅ Patrones de diseño clave identificados
+- ✅ Flujos de usuario extraídos y documentados
+- ✅ Patrones de implementación de UX analizados
+
+### **Estándares de Documentación**
+- **Ejemplos de código**: Incluir fragmentos de código relevantes con explicaciones
+- **Diagramas visuales**: Usar Mermaid para relaciones complejas
+- **Referencias cruzadas**: Enlazar componentes y archivos relacionados
+- **Métricas cuantificables**: Líneas de código, puntajes de complejidad, cobertura de pruebas
+- **Métricas de flujo de usuario**: Recuentos de pasos, embudos de conversión, tasas de error
+
+### **Estándares de Accionabilidad**
+- **Recomendaciones específicas**: Próximos pasos concretos para mejoras
+- **Evaluación de riesgos**: Identificar problemas potenciales y su impacto
+- **Ranking de prioridad**: Ordenar recomendaciones por importancia y esfuerzo
+- **Guía de implementación**: Cómo ejecutar cambios sugeridos
+- **Oportunidades de mejora de UX**: Optimizaciones específicas de flujo de usuario
+
+### **Estándares de Mejora de Reglas de Producto**
+- **Identificación de patrones**: Documentar patrones repetitivos específicos del dominio
+- **Sugerencias de reglas**: Proponer la creación de reglas específicas del producto cuando corresponda
+- **Oportunidades de mejora**: Identificar formas de mejorar reglas de producto existentes
+- **Documentación de patrones de flujo de usuario**: Extraer patrones de implementación de UX reutilizables
+
+---
+
+**Recuerda**: El objetivo es crear documentación integral que permita el entendimiento, mantenimiento y evolución de la base de código, con un enfoque especial en extraer flujos de usuario y patrones de implementación de UX para comparación entre productos a través de diferentes plataformas.

@@ -1,0 +1,646 @@
+---
+alwaysApply: false
+---
+# Vertical Slices UI - Guías Detalladas y Mejores Prácticas
+
+Este documento complementa las reglas de arquitectura con ejemplos detallados, casos de uso y decisiones de diseño para implementar Vertical Slices UI en el proyecto.
+
+## Tabla de Contenidos
+
+1. [¿Qué es Vertical Slices UI?](#qué-es-vertical-slices-ui)
+2. [Beneficios vs Organización Tradicional](#beneficios-vs-organización-tradicional)
+3. [Casos de Uso Detallados](#casos-de-uso-detallados)
+4. [Decisiones de Diseño](#decisiones-de-diseño)
+5. [Patrones Comunes](#patrones-comunes)
+6. [Anti-patrones a Evitar](#anti-patrones-a-evitar)
+7. [Migración Paso a Paso](#migración-paso-a-paso)
+8. [Testing en Vertical Slices](#testing-en-vertical-slices)
+
+## ¿Qué es Vertical Slices UI?
+
+**Vertical Slices UI** es una metodología de organización de código que agrupa archivos por sub-funcionalidades cohesivas en lugar de por tipo de archivo.
+
+### Organización Tradicional (Horizontal)
+
+```
+ui/
+├── components/           # Todos los componentes juntos
+│   ├── UserModal.tsx
+│   ├── UserTable.tsx
+│   ├── ProductCard.tsx
+│   ├── ProductForm.tsx
+│   └── AnalyticsChart.tsx
+├── pages/                # Todas las páginas juntas
+│   ├── users.page.tsx
+│   ├── products.page.tsx
+│   └── analytics.page.tsx
+└── hooks/                # Todos los hooks juntos
+    ├── useUsers.ts
+    ├── useProducts.ts
+    └── useAnalytics.ts
+```
+
+**Problemas:**
+- ❌ Difícil encontrar código relacionado
+- ❌ Cambios en una funcionalidad tocan múltiples carpetas
+- ❌ No está claro qué componentes pertenecen a qué funcionalidad
+- ❌ Riesgo de acoplar componentes no relacionados
+
+### Organización Vertical Slices
+
+```
+ui/
+├── _shared/              # Solo elementos usados en 2+ slices
+│   ├── components/
+│   ├── hooks/
+│   └── types/
+├── user-management/      # Slice completo de usuarios
+│   ├── components/
+│   │   ├── user-modal/
+│   │   └── user-table/
+│   ├── pages/
+│   │   └── users.page.tsx
+│   ├── hooks/
+│   │   └── useUsers.ts
+│   └── index.ts
+├── product-catalog/      # Slice completo de productos
+│   ├── components/
+│   │   ├── product-card/
+│   │   └── product-form/
+│   ├── pages/
+│   │   └── products.page.tsx
+│   ├── hooks/
+│   │   └── useProducts.ts
+│   └── index.ts
+└── analytics/            # Slice completo de analytics
+    ├── components/
+    │   └── analytics-chart/
+    ├── pages/
+    │   └── analytics.page.tsx
+    ├── hooks/
+    │   └── useAnalytics.ts
+    └── index.ts
+```
+
+**Ventajas:**
+- ✅ Todo el código relacionado está junto
+- ✅ Fácil encontrar y modificar funcionalidades
+- ✅ Slices independientes con mínimas dependencias
+- ✅ Escalable sin afectar otros slices
+
+## Beneficios vs Organización Tradicional
+
+| Aspecto | Organización Tradicional | Vertical Slices UI |
+|---------|-------------------------|-------------------|
+| **Cohesión** | Baja (por tipo de archivo) | Alta (por funcionalidad) |
+| **Navegación** | Saltar entre carpetas | Todo en un lugar |
+| **Escalabilidad** | Carpetas crecen sin límite | Slices independientes |
+| **Mantenimiento** | Múltiples carpetas afectadas | Un solo directorio |
+| **Testing** | Tests dispersos | Tests por slice |
+| **Onboarding** | Difícil entender estructura | Estructura intuitiva |
+| **Refactoring** | Cambios tocan múltiples lugares | Cambios localizados |
+
+## Casos de Uso Detallados
+
+### Caso 1: Feature con Múltiples Sub-funcionalidades
+
+**Escenario:** Feature de Redes Sociales con creación, historial, contenido propuesto y campañas.
+
+**Solución:**
+
+```
+social-networks/ui/
+├── _shared/              # Componentes usados en múltiples slices
+│   ├── components/
+│   │   ├── basic-config-section/
+│   │   ├── content-success-modal/
+│   │   └── instagram-preview/
+│   └── index.ts
+│
+├── content-creation/     # Slice: Crear contenido
+│   ├── components/
+│   │   ├── instagram-post-modal/
+│   │   ├── instagram-story-modal/
+│   │   └── tiktok-video-modal/
+│   ├── pages/
+│   │   ├── create-content.page.tsx
+│   │   └── create-template.page.tsx
+│   └── index.ts
+│
+├── content-history/      # Slice: Ver historial
+│   ├── components/
+│   │   └── content-history-modal/
+│   ├── pages/
+│   │   └── history-tab.page.tsx
+│   └── index.ts
+│
+├── proposed-content/     # Slice: Contenido AI
+│   ├── components/
+│   │   ├── content-carousel/
+│   │   └── proposed-content-cards/
+│   ├── pages/
+│   │   └── proposed-content-tab.page.tsx
+│   └── index.ts
+│
+└── campaigns/            # Slice: Campañas WhatsApp
+    ├── components/
+    │   ├── whatsapp-campaign-modal/
+    │   └── whatsapp-preview/
+    ├── pages/
+    │   └── campaigns-new.page.tsx
+    └── index.ts
+```
+
+**Razón:** Cada sub-funcionalidad tiene suficiente código (2+ componentes, páginas, hooks) para justificar un slice independiente.
+
+### Caso 2: Feature Simple
+
+**Escenario:** Feature de Dashboard con solo una página y componentes compartidos.
+
+**❌ NO crear slices para esto:**
+
+```
+dashboard/ui/
+├── analytics/            # ❌ Innecesario
+│   └── components/
+└── charts/               # ❌ Innecesario
+    └── components/
+```
+
+**✅ Estructura correcta:**
+
+```
+dashboard/ui/
+├── components/           # Todos los componentes aquí
+│   ├── analytics-card/
+│   ├── chart-widget/
+│   └── stats-summary/
+├── pages/
+│   └── dashboard.page.tsx
+└── index.ts
+```
+
+**Razón:** No hay suficientes sub-funcionalidades independientes. Todo está relacionado con el dashboard.
+
+### Caso 3: Componente Compartido vs Específico
+
+**Pregunta:** ¿Dónde va un componente Modal?
+
+**Decisión:**
+
+```typescript
+// ✅ Modal usado solo en user-management → va en el slice
+user-management/
+└── components/
+    └── edit-user-modal/
+
+// ✅ Modal usado en user-management Y product-catalog → va en _shared
+_shared/
+└── components/
+    └── confirmation-modal/
+
+// ✅ Modal usado en TODA la app → va en shared/ root
+src/shared/ui/components/
+└── modal/
+```
+
+**Regla:** Si se usa en 2+ slices del mismo feature → `_shared/`. Si se usa en 2+ features → `src/shared/`.
+
+## Decisiones de Diseño
+
+### Decisión 1: ¿Cuándo crear un nuevo slice?
+
+**Checklist:**
+- [ ] ¿Tiene al menos 2-3 componentes relacionados?
+- [ ] ¿Existe una página dedicada para esta funcionalidad?
+- [ ] ¿La lógica es cohesiva y diferente de otros slices?
+- [ ] ¿Puedo identificar hooks o tipos específicos del contexto?
+
+**Si 3 o más ✅ → Crear slice**
+**Si 2 o menos ✅ → Agregar a slice existente o _shared**
+
+### Decisión 2: ¿Slice nuevo o agregar a existente?
+
+**Ejemplo:** Necesito agregar "Editar Contenido"
+
+**Opción A: Nuevo slice `content-editing/`**
+- ❌ Solo tiene 1-2 componentes
+- ❌ Muy acoplado con `content-creation/`
+- ❌ Comparte mucha lógica
+
+**Opción B: Agregar a `content-creation/`**
+- ✅ Funcionalidad relacionada
+- ✅ Reutiliza componentes existentes
+- ✅ Mantiene cohesión
+
+**Decisión:** Agregar a `content-creation/` y renombrar a `content-management/` si es necesario.
+
+### Decisión 3: ¿Páginas en slice o en root?
+
+**En el slice:**
+```
+content-creation/
+└── pages/
+    ├── create-content.page.tsx     # ✅ Página específica del slice
+    └── create-template.page.tsx    # ✅ Página específica del slice
+```
+
+**En root:**
+```
+pages/
+├── social-networks.page.tsx  # ✅ Página contenedor principal
+└── redes-sociales.page.tsx   # ✅ Página alternativa (i18n)
+```
+
+**Regla:** Páginas específicas de un slice → en el slice. Páginas contenedoras/principales → en root.
+
+## Patrones Comunes
+
+### Patrón 1: Index.ts por Slice
+
+Cada slice debe exportar su API pública:
+
+```typescript
+// content-creation/index.ts
+
+// Componentes (ordenados alfabéticamente)
+export { AvatarGeneratorModal } from './components/avatar-generator-modal/avatar-generator-modal.component';
+export { CreateTemplateModal } from './components/create-template-modal';
+export { InstagramPostModal } from './components/instagram-post-modal/instagram-post-modal.component';
+export { InstagramStoryModal } from './components/instagram-story-modal/instagram-story-modal.component';
+export { LogoGeneratorModal } from './components/logo-generator-modal/logo-generator-modal.component';
+export { TikTokVideoModal } from './components/tiktok-video-modal/tiktok-video-modal.component';
+
+// Páginas
+export { CreateContentPage } from './pages/create-content.page';
+export { CreateTemplatePage } from './pages/create-template.page';
+
+// Hooks
+export { useContentForm } from './hooks/useContentForm';
+export { useContentValidation } from './hooks/useContentValidation';
+
+// Tipos
+export type { ContentFormData, ContentFormErrors } from './types';
+```
+
+### Patrón 2: Index.ts Principal
+
+El index principal re-exporta desde slices:
+
+```typescript
+// ui/index.ts
+
+// Shared (primero)
+export * from './_shared';
+
+// Slices (orden alfabético)
+export * from './campaigns';
+export * from './content-creation';
+export * from './content-history';
+export * from './proposed-content';
+
+// Main pages (último)
+export { SocialNetworksPage } from './pages/social-networks.page';
+```
+
+### Patrón 3: Importaciones desde Consumer
+
+```typescript
+// ✅ PREFERIDO: Importar desde slice específico
+import { 
+  InstagramPostModal, 
+  CreateContentPage 
+} from '@social-networks/ui/content-creation';
+
+// ✅ ALTERNATIVA: Importar desde index principal
+import { 
+  InstagramPostModal, 
+  ContentCarousel 
+} from '@social-networks/ui';
+
+// ❌ EVITAR: Importar directamente desde archivos internos
+import { InstagramPostModal } from '@social-networks/ui/content-creation/components/instagram-post-modal/instagram-post-modal.component';
+```
+
+### Patrón 4: Estructura de Componente en Slice
+
+```
+content-creation/
+└── components/
+    └── instagram-post-modal/
+        ├── instagram-post-modal.component.tsx    # Componente principal
+        ├── instagram-post-modal.types.ts          # Tipos específicos
+        ├── instagram-post-modal.test.tsx          # Tests
+        ├── instagram-post-modal.scss              # Estilos (si usa SCSS)
+        └── index.ts                               # Re-export
+```
+
+## Anti-patrones a Evitar
+
+### ❌ Anti-patrón 1: Slices Demasiado Granulares
+
+```
+// ❌ MAL: Crear un slice por cada componente
+ui/
+├── user-table/
+│   └── components/
+│       └── user-table/
+├── user-modal/
+│   └── components/
+│       └── user-modal/
+└── user-form/
+    └── components/
+        └── user-form/
+```
+
+**Problema:** Fragmentación excesiva, dificulta mantener cohesión.
+
+**✅ Solución:**
+
+```
+ui/
+└── user-management/
+    ├── components/
+    │   ├── user-table/
+    │   ├── user-modal/
+    │   └── user-form/
+    └── pages/
+        └── users.page.tsx
+```
+
+### ❌ Anti-patrón 2: Duplicar Componentes en Múltiples Slices
+
+```
+// ❌ MAL: Mismo componente copiado en múltiples lugares
+content-creation/
+└── components/
+    └── success-modal/        # ❌ Duplicado
+
+content-history/
+└── components/
+    └── success-modal/        # ❌ Duplicado
+```
+
+**✅ Solución:**
+
+```
+_shared/
+└── components/
+    └── content-success-modal/  # ✅ Un solo lugar
+```
+
+### ❌ Anti-patrón 3: Importar Entre Slices
+
+```typescript
+// ❌ MAL: content-history importando directamente desde content-creation
+// content-history/components/history-table.tsx
+import { InstagramPostModal } from '../../content-creation/components/instagram-post-modal';
+```
+
+**Problema:** Acopla slices que deberían ser independientes.
+
+**✅ Solución 1:** Mover componente compartido a `_shared/`
+
+```typescript
+// ✅ MEJOR: Importar desde _shared
+import { InstagramPostModal } from '../../_shared/components/instagram-post-modal';
+```
+
+**✅ Solución 2:** Importar desde index principal
+
+```typescript
+// ✅ MEJOR: Importar desde index
+import { InstagramPostModal } from '..';
+```
+
+### ❌ Anti-patrón 4: _shared Masivo
+
+```
+// ❌ MAL: Todo en _shared sin slices
+ui/
+├── _shared/
+│   ├── components/      # 50+ componentes
+│   ├── hooks/           # 30+ hooks
+│   └── types/
+└── pages/
+    └── main.page.tsx
+```
+
+**Problema:** Vuelve al problema original de organización horizontal.
+
+**✅ Solución:** Crear slices apropiados y mover componentes específicos.
+
+## Migración Paso a Paso
+
+### Paso 1: Análisis y Planificación
+
+**Actividades:**
+1. Listar todos los componentes y páginas actuales
+2. Identificar funcionalidades cohesivas
+3. Agrupar componentes/páginas por funcionalidad
+4. Definir nombres de slices
+
+**Ejemplo:**
+
+```
+Análisis de social-networks:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Funcionalidad: Creación de Contenido
+- Components: instagram-post-modal, instagram-story-modal, tiktok-video-modal
+- Pages: create-content.page, create-template.page
+- Slice propuesto: content-creation/
+
+Funcionalidad: Historial
+- Components: content-history-modal
+- Pages: history-tab.page
+- Slice propuesto: content-history/
+
+Funcionalidad: Contenido Propuesto
+- Components: content-carousel, proposed-content-cards
+- Pages: proposed-content-tab.page
+- Slice propuesto: proposed-content/
+
+Compartidos:
+- Components: basic-config-section, content-success-modal
+- Destino: _shared/
+```
+
+### Paso 2: Crear Estructura de Directorios
+
+```bash
+# Crear slices
+mkdir -p ui/_shared/{components,hooks,types}
+mkdir -p ui/content-creation/{components,pages,hooks}
+mkdir -p ui/content-history/{components,pages,hooks}
+mkdir -p ui/proposed-content/{components,pages,hooks}
+
+# Crear index files
+touch ui/_shared/index.ts
+touch ui/content-creation/index.ts
+touch ui/content-history/index.ts
+touch ui/proposed-content/index.ts
+```
+
+### Paso 3: Mover Componentes (Con Git)
+
+```bash
+# Usar git mv para preservar historial
+git mv ui/components/instagram-post-modal ui/content-creation/components/
+git mv ui/components/instagram-story-modal ui/content-creation/components/
+git mv ui/components/content-success-modal ui/_shared/components/
+```
+
+### Paso 4: Actualizar Exports
+
+```typescript
+// content-creation/index.ts
+export { InstagramPostModal } from './components/instagram-post-modal/instagram-post-modal.component';
+export { InstagramStoryModal } from './components/instagram-story-modal/instagram-story-modal.component';
+```
+
+### Paso 5: Actualizar Imports
+
+```bash
+# Buscar todos los imports del componente
+grep -r "from.*instagram-post-modal" src/
+
+# Actualizar cada import
+# Antes:
+import { InstagramPostModal } from '../components/instagram-post-modal';
+
+# Después:
+import { InstagramPostModal } from '../content-creation';
+```
+
+### Paso 6: Validar
+
+```bash
+# Compilar proyecto
+npm run build
+
+# Ejecutar tests
+npm run test
+
+# Verificar linter
+npm run lint
+```
+
+## Testing en Vertical Slices
+
+### Organización de Tests
+
+```
+content-creation/
+├── components/
+│   └── instagram-post-modal/
+│       ├── instagram-post-modal.component.tsx
+│       └── instagram-post-modal.test.tsx      # Test junto al componente
+├── hooks/
+│   └── useContentForm/
+│       ├── useContentForm.ts
+│       └── useContentForm.test.ts             # Test junto al hook
+└── __tests__/                                 # Tests de integración del slice
+    └── content-creation-flow.test.tsx
+```
+
+### Tests Unitarios por Componente
+
+```typescript
+// content-creation/components/instagram-post-modal/instagram-post-modal.test.tsx
+import { render, screen } from '@testing-library/react';
+import { InstagramPostModal } from './instagram-post-modal.component';
+
+describe('InstagramPostModal', () => {
+  it('should render modal when open', () => {
+    render(<InstagramPostModal isOpen onClose={jest.fn()} />);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+```
+
+### Tests de Integración por Slice
+
+```typescript
+// content-creation/__tests__/content-creation-flow.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { CreateContentPage } from '../pages/create-content.page';
+
+describe('Content Creation Flow', () => {
+  it('should complete full content creation flow', async () => {
+    render(<CreateContentPage />);
+    
+    // Test complete flow from selection to creation
+    fireEvent.click(screen.getByText('Instagram Post'));
+    // ... más interacciones
+    
+    expect(screen.getByText('Contenido creado exitosamente')).toBeInTheDocument();
+  });
+});
+```
+
+## Ejemplos de Implementación Real
+
+Ver implementación completa en:
+- [`src/social-networks/ui/`](../../social-networks/ui/) - Ejemplo de referencia con 4 slices
+- [`src/social-networks/ui/README.md`](../../social-networks/ui/README.md) - Documentación del feature
+
+## Referencias y Recursos
+
+- **Arquitectura Hexagonal**: Ver `.cursor/rules/rapid_development/architecture.mdc`
+- **Convenciones de Nombres**: Ver sección 5 de `architecture.mdc`
+- **Feature-Sliced Design**: https://feature-sliced.design/ (metodología similar)
+- **Vertical Slice Architecture**: https://www.jimmybogard.com/vertical-slice-architecture/ (concepto backend aplicado a frontend)
+
+## Preguntas Frecuentes
+
+### ¿Puedo mezclar slices con componentes en root?
+
+**Sí**, pero solo para features muy simples con < 5 componentes totales. Para features complejos, usar slices desde el inicio.
+
+### ¿Qué pasa si un componente crece y necesita su propio slice?
+
+**Refactorizar**: Crear el nuevo slice y mover el componente. Los slices deben evolucionar con el código.
+
+### ¿Cómo manejo estilos globales del feature?
+
+```
+ui/
+├── _shared/
+│   ├── styles/
+│   │   ├── variables.scss
+│   │   └── mixins.scss
+│   └── index.ts
+```
+
+### ¿Dónde van los types compartidos?
+
+```
+ui/
+├── _shared/
+│   ├── types/
+│   │   ├── content.types.ts
+│   │   └── modal.types.ts
+│   └── index.ts
+```
+
+### ¿Puedo tener sub-slices dentro de un slice?
+
+**No recomendado**. Si necesitas sub-slices, probablemente el slice es demasiado grande y debe dividirse en slices hermanos.
+
+```
+// ❌ Evitar sub-slices
+content-creation/
+└── modals/                    # ❌ Sub-slice
+    ├── instagram/
+    └── tiktok/
+
+// ✅ Mejor: Slices hermanos
+├── instagram-content/         # ✅ Slice independiente
+└── tiktok-content/            # ✅ Slice independiente
+```
+
+---
+
+**Última actualización:** Diciembre 2024
+**Versión:** 1.0.0
+**Proyecto piloto:** social-networks
