@@ -14,19 +14,30 @@ interface SaveDiagnosticSnapshotInput {
   beweScore: IBeweScore
 }
 
+export interface SharedDiagnosticPayload {
+  businessConfig: IBusinessConfig
+  answers: IQuestionnaireAnswer[]
+  roiResult: IROIResult
+  growthDiagnostic: IGrowthDiagnostic
+  beweScore: IBeweScore
+}
+
 export class SupabaseDiagnosticAdapter {
-  async saveDiagnosticSnapshot(input: SaveDiagnosticSnapshotInput): Promise<void> {
-    if (!isSupabaseConfigured() || !supabase) return
+  /**
+   * Guarda el snapshot del diagnóstico y retorna el shareId (UUID único del resultado).
+   * Este ID se usa para construir la URL pública /r/:shareId.
+   */
+  async saveDiagnosticSnapshot(input: SaveDiagnosticSnapshotInput): Promise<string | null> {
+    if (!isSupabaseConfigured() || !supabase) return null
 
     const sessionId = await ensureFunnelSession()
-    if (!sessionId) return
+    if (!sessionId) return null
 
     const baseScenario = input.roiResult.scenarios.find((scenario) => scenario.type === 'base')
 
     const businessPayload = {
       session_id: sessionId,
       business_name: input.businessConfig.businessName,
-      // La constraint actual en SQL espera valores en mayúscula.
       sector: input.businessConfig.sector.toUpperCase(),
       currency: input.businessConfig.currency,
     }
@@ -84,9 +95,33 @@ export class SupabaseDiagnosticAdapter {
     const resultUpsert = await supabase
       .from('bf_diagnostic_results')
       .upsert(resultPayload, { onConflict: 'session_id' })
+      .select('id')
+      .single()
 
     if (resultUpsert.error) {
       throw new Error(`No se pudo guardar bf_diagnostic_results: ${resultUpsert.error.message}`)
     }
+
+    // Retorna el UUID del registro — es el shareId para la URL pública
+    return resultUpsert.data?.id ?? null
+  }
+
+  /**
+   * Carga un diagnóstico guardado por su shareId (UUID de bf_diagnostic_results).
+   * Usado por SharedResultsPage para renderizar resultados compartidos.
+   */
+  async getByShareId(shareId: string): Promise<SharedDiagnosticPayload | null> {
+    if (!isSupabaseConfigured() || !supabase) return null
+
+    const { data, error } = await supabase
+      .from('bf_diagnostic_results')
+      .select('raw_payload')
+      .eq('id', shareId)
+      .single()
+
+    if (error || !data?.raw_payload) return null
+
+    const payload = data.raw_payload as SharedDiagnosticPayload
+    return payload
   }
 }

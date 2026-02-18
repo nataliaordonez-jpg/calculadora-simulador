@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Button, Card, IconComponent } from '@beweco/aurora-ui'
 import { FunnelLayout } from '../../_shared/components/funnel-layout/FunnelLayout'
+import { ShareModal } from '../components/ShareModal'
 import { useFunnelContext } from '../../_shared/context/funnel-context'
 import { useFunnelNavigation } from '../../_shared/hooks/use-funnel-navigation'
 import { FunnelStep } from '@funnel/domain/enums/funnel-step.enum'
@@ -831,6 +832,19 @@ export function ResultsDashboardPage() {
 
   return (
     <FunnelLayout showHeader={false}>
+      {/* ── SHARE MODAL (aparece 3s después de cargar) ── */}
+      <ShareModal
+        businessName={data.nombreNegocio}
+        roi={data.escenarioRealista.roi}
+        potentialMonthly={data.escenarioRealista.mes4_6}
+        formatCurrency={formatCurrency}
+        shareUrl={
+          state.shareId
+            ? `${window.location.origin}/r/${state.shareId}`
+            : window.location.href
+        }
+      />
+
       <div className="relative">
         {/* ── Fondo gradiente fijo — permanece durante el scroll ── */}
         <div

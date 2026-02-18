@@ -66,6 +66,10 @@ export function ProcessingPage() {
         roiResult: result.roi,
         growthDiagnostic: result.growth,
         beweScore: result.beweScore,
+      }).then((shareId) => {
+        if (shareId) {
+          dispatch({ type: 'SET_SHARE_ID', payload: shareId })
+        }
       }).catch((error: unknown) => {
         console.error('No se pudo guardar el diagnóstico en Supabase:', error)
       })

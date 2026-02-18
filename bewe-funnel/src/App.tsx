@@ -9,6 +9,7 @@ import { QuestionnairePage } from './funnel/ui/questionnaire/pages/Questionnaire
 import { ProcessingPage } from './funnel/ui/processing/pages/ProcessingPage'
 import { LeadCapturePage } from './funnel/ui/lead-capture/pages/LeadCapturePage'
 import { ResultsDashboardPage } from './funnel/ui/results-dashboard/pages/ResultsDashboardPage'
+import { SharedResultsPage } from './funnel/ui/results-dashboard/pages/SharedResultsPage'
 import { SocialSharePage } from './funnel/ui/social-share/pages/SocialSharePage'
 
 function App() {
@@ -24,6 +25,8 @@ function App() {
               <Route path="/processing" element={<ProcessingPage />} />
               <Route path="/lead-capture" element={<LeadCapturePage />} />
               <Route path="/results" element={<ResultsDashboardPage />} />
+              {/* Ruta pública: carga resultados guardados por su shareId único */}
+              <Route path="/r/:shareId" element={<SharedResultsPage />} />
               <Route path="/share" element={<SocialSharePage />} />
             </Routes>
           </FunnelProvider>

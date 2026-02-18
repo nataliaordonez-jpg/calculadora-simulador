@@ -19,6 +19,8 @@ export interface FunnelState {
   beweScore: IBeweScore | null
   lead: ILead | null
   isProcessing: boolean
+  /** UUID de bf_diagnostic_results — usado para construir la URL pública /r/:shareId */
+  shareId: string | null
 }
 
 const initialState: FunnelState = {
@@ -39,6 +41,7 @@ const initialState: FunnelState = {
   beweScore: null,
   lead: null,
   isProcessing: false,
+  shareId: null,
 }
 
 /* ─── Actions ─── */
@@ -51,6 +54,7 @@ type FunnelAction =
   | { type: 'SET_RESULTS'; payload: { roi: IROIResult; growth: IGrowthDiagnostic; beweScore: IBeweScore } }
   | { type: 'SET_LEAD'; payload: ILead }
   | { type: 'SET_PROCESSING'; payload: boolean }
+  | { type: 'SET_SHARE_ID'; payload: string }
   | { type: 'RESET' }
 
 function funnelReducer(state: FunnelState, action: FunnelAction): FunnelState {
@@ -113,6 +117,9 @@ function funnelReducer(state: FunnelState, action: FunnelAction): FunnelState {
 
     case 'SET_PROCESSING':
       return { ...state, isProcessing: action.payload }
+
+    case 'SET_SHARE_ID':
+      return { ...state, shareId: action.payload }
 
     case 'RESET':
       return initialState
