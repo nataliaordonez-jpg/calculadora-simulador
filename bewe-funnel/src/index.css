@@ -1,0 +1,512 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap');
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS — BeweOS Design System
+   Documento fuente: Design rules cursor_V1.0.md
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Primary (Blue Tech) ── */
+  --color-primary-100: #DFEDFE;
+  --color-primary-200: #B0D2FC;
+  --color-primary-300: #88BCFB;
+  --color-primary-400: #60A5FA;
+  --color-primary-500: #5694E1;
+  --color-primary-600: #487CBB;
+  --color-primary-700: #355B8A;
+
+  /* ── Secondary (Green Growth) ── */
+  --color-secondary-100: #D6F6EB;
+  --color-secondary-200: #9AE9CC;
+  --color-secondary-300: #67DEB2;
+  --color-secondary-400: #34D399;
+  --color-secondary-500: #2FBE8A;
+  --color-secondary-600: #279E73;
+  --color-secondary-700: #1D7454;
+
+  /* ── Structural Colors ── */
+  --color-base-dark: #0A2540;
+  --color-surface-deep: #355452;
+  --color-teal-neutral: #75C9C8;
+
+  /* ── Soft Backgrounds ── */
+  --color-cyan-light: #67E8F9;
+  --color-aqua-soft: #CCFBF1;
+  --color-warm-yellow: #FEF3C7;
+
+  /* ── Accent ── */
+  --color-accent: #FAD19E;
+
+  /* ── Semantic (Feedback) ── */
+  --color-success: #4ADE80;
+  --color-error: #F87171;
+  --color-warning: #FBBF24;
+  --color-info: #38BDF8;
+
+  /* ── Typography ── */
+  --font-inter: 'Inter', sans-serif;
+  --font-merriweather: 'Merriweather', serif;
+
+  /* ── Spacing (Base 8) ── */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+}
+
+/* ── Global Base Styles ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-base-dark);
+  background-color: #FFFFFF;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography Scale ── */
+.text-h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-family: var(--font-inter);
+}
+
+.text-h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  font-family: var(--font-inter);
+}
+
+.text-h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: var(--font-inter);
+}
+
+.text-body {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  font-family: var(--font-inter);
+}
+
+.text-small {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  font-family: var(--font-inter);
+}
+
+.text-button {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  font-family: var(--font-inter);
+}
+
+/* ── Merriweather (exclusivo LINDA IA) ── */
+.text-linda {
+  font-family: var(--font-merriweather);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LINDA ANIMATIONS — Motion rules Linda_V1.0.md
+   ═══════════════════════════════════════════════════════════ */
+
+/* Animación 1: HOVER — Gradient Motion */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.linda-hover-gradient {
+  background: linear-gradient(90deg, var(--color-primary-400) 0%, var(--color-secondary-400) 50%, var(--color-primary-400) 100%);
+  background-size: 200% 100%;
+}
+.linda-hover-gradient:hover {
+  animation: gradient-shift 3s linear infinite;
+}
+
+/* Animación 2: CLICK — Gradient Motion (Fast) */
+.linda-click-gradient:active {
+  animation: gradient-shift 0.6s linear infinite;
+}
+
+/* Animación 4: HOVER — border-slide-down */
+@keyframes border-slide-down {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+/* Animación Heartbeat para CTA */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    transform: scale(1.05) translateY(-4px);
+    box-shadow: 0 12px 28px rgba(96, 165, 250, 0.4);
+    filter: drop-shadow(0 6px 12px rgba(96, 165, 250, 0.25));
+  }
+}
+
+.animate-pulse-glow {
+  animation: heartbeat 3s ease-in-out infinite;
+}
+
+/* Animación Float para iconos */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float {
+  display: inline-block;
+  animation: float 2.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Animación Line-Slide — Botón Onboarding
+   Adaptada a paleta Primary (Blue Tech #60A5FA)
+   ═══════════════════════════════════════════════════════════ */
+.btn-line-slide {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--color-primary-400) !important;
+  background-color: #fff !important;
+  color: var(--color-primary-400) !important;
+  transition: all 0.3s ease;
+}
+
+.btn-line-slide::after {
+  content: "→";
+  position: absolute;
+  top: 46%;
+  left: 4px;
+  transform: translateY(-50%);
+  transition: all 0.3s ease;
+  transition-delay: 0.1s;
+  color: var(--color-primary-400);
+  font-size: 1.4rem;
+  font-weight: 900;
+  z-index: 1;
+  opacity: 1;
+}
+
+.btn-line-slide:hover {
+  background-color: #006FEE !important; /* Mismo color que el botón principal Aurora UI */
+  border-color: #006FEE !important;
+  color: #fff !important;
+}
+
+.btn-line-slide:hover::after {
+  left: calc(100% - 8px);
+  transform: translate(-100%, -50%);
+  color: #fff;
+  opacity: 1;
+}
+
+/* Estado deshabilitado — sin animación */
+.btn-line-slide:disabled,
+.btn-line-slide[data-disabled="true"] {
+  border-color: var(--color-primary-200) !important;
+  color: var(--color-primary-200) !important;
+  background-color: transparent !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-line-slide:disabled::after,
+.btn-line-slide[data-disabled="true"]::after {
+  display: none;
+}
+
+/* Animación Campana (bell swing) para candado */
+@keyframes bell-swing {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  15% {
+    transform: rotate(12deg);
+  }
+  30% {
+    transform: rotate(-10deg);
+  }
+  45% {
+    transform: rotate(6deg);
+  }
+  60% {
+    transform: rotate(-4deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+
+.animate-bell-swing {
+  display: inline-block;
+  transform-origin: top center;
+  animation: bell-swing 2.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Animación Slide-Reveal — Botón Lead Capture
+   Adaptada a paleta Primary (Blue Tech)
+   ═══════════════════════════════════════════════════════════ */
+.btn-slide-reveal {
+  position: relative;
+  background: var(--color-primary-400) !important;
+  border-color: var(--color-primary-400) !important;
+  color: #fff !important;
+  overflow: hidden;
+  transition: all 0.35s ease;
+}
+
+/* Línea inferior que se expande */
+.btn-slide-reveal::before {
+  content: "";
+  width: 0;
+  height: 4px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: var(--color-primary-700);
+  transition: width 0.35s ease;
+  z-index: 2;
+  border-radius: 0 0 9999px 9999px;
+}
+
+/* Capa de fondo hover que baja */
+.btn-slide-reveal::after {
+  content: "";
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 9999px;
+  background-color: #006FEE;
+  transform: translateY(-100%);
+  transition: transform 0.35s ease;
+  z-index: 2;
+}
+
+.btn-slide-reveal:hover::before {
+  width: 100%;
+}
+
+.btn-slide-reveal:hover::after {
+  transform: translateY(0);
+}
+
+/* Desactivado */
+.btn-slide-reveal:disabled,
+.btn-slide-reveal[data-disabled="true"] {
+  background: var(--color-primary-200) !important;
+  border-color: var(--color-primary-200) !important;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-slide-reveal:disabled::before,
+.btn-slide-reveal:disabled::after,
+.btn-slide-reveal[data-disabled="true"]::before,
+.btn-slide-reveal[data-disabled="true"]::after {
+  display: none;
+}
+
+/* Utilidades de entrada para secciones de resultados */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Animación entrada burbuja de chat */
+@keyframes chatBubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 420ms ease-out both;
+}
+
+/* Alias para mantener consistencia con clases usadas en componentes */
+.animate-heartbeat {
+  animation: heartbeat 3s ease-in-out infinite;
+}
+
+@keyframes subtle-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+}
+
+.hover-shake:hover {
+  animation: subtle-shake 420ms ease-in-out;
+}
+
+@keyframes green-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(52, 211, 153, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(52, 211, 153, 0.45);
+  }
+}
+
+.animate-green-glow {
+  animation: green-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes dot-blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+
+.typing-dot {
+  animation: dot-blink 1.2s infinite;
+}
+
+/* ─── ANIMACIONES DE ÍCONOS EN HOVER (Acto 2 y Acto 3) ─── */
+
+/* 1. Alarma sonando */
+@keyframes alarmaRing {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50% { transform: rotate(-15deg); }
+  20%, 40%, 60% { transform: rotate(15deg); }
+  70% { transform: rotate(0deg); }
+}
+
+/* 2. Luna girando + brillo */
+@keyframes lunaRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes lunaGlow {
+  0%, 100% { filter: drop-shadow(0 0 0px rgba(255, 223, 0, 0)); }
+  50% { filter: drop-shadow(0 0 14px rgba(255, 223, 0, 0.85)); }
+}
+
+/* 3. Calendario flip + float */
+@keyframes calendarioFlip {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(180deg); }
+  100% { transform: rotateY(360deg); }
+}
+@keyframes calendarioFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* 4. Mano adiós + slide */
+@keyframes manoAdios {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50% { transform: rotate(15deg); }
+  20%, 40%, 60% { transform: rotate(-10deg); }
+  70% { transform: rotate(0deg); }
+}
+@keyframes manoSlideOut {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(10px); }
+}
+
+/* 5. Reloj tick (Acto 3 - infinito en hover) */
+@keyframes relojTick {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.15) rotate(5deg); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.15) rotate(-5deg); }
+}
+
+/* 6. Luna escondiéndose (Acto 3) */
+@keyframes lunaHide {
+  0%, 100% { transform: translateY(0px) scale(1); opacity: 1; }
+  50% { transform: translateY(-14px) scale(0.75); opacity: 0.25; }
+}
+
+/* 7. Mano alejándose (Acto 3) */
+@keyframes manoAway {
+  0% { transform: translateX(0px) scale(1); opacity: 1; }
+  50% { transform: translateX(28px) scale(0.65); opacity: 0.25; }
+  100% { transform: translateX(0px) scale(1); opacity: 1; }
+}
+
+/* ─── Acto 2: Métricas ─── */
+.metrica-card:hover .icono-alarma {
+  animation: alarmaRing 0.8s ease-in-out;
+}
+.metrica-card:hover .icono-luna {
+  animation: lunaRotate 2s ease-in-out, lunaGlow 1.5s ease-in-out;
+}
+.metrica-card:hover .icono-calendario {
+  animation: calendarioFlip 1s ease-in-out, calendarioFloat 0.6s ease-in-out;
+}
+.metrica-card:hover .icono-mano {
+  animation: manoAdios 0.8s ease-in-out, manoSlideOut 0.8s ease-in-out;
+}
+
+/* ─── Acto 3: Dolor cards ─── */
+.dolor-card:hover .icono-alarma {
+  animation: relojTick 0.6s ease-in-out infinite;
+}
+.dolor-card:hover .icono-calendario {
+  animation: calendarioFlip 0.8s ease-in-out;
+}
+.dolor-card:hover .icono-luna {
+  animation: lunaHide 1.2s ease-in-out;
+}
+.dolor-card:hover .icono-mano {
+  animation: manoAway 1.5s ease-in-out;
+}
+
+/* ─── Accesibilidad ─── */
+@media (prefers-reduced-motion: reduce) {
+  .icono-alarma, .icono-luna, .icono-calendario, .icono-mano {
+    animation: none !important;
+  }
+}
+
+/* Animación corazón que se parte */
+@keyframes heartWhole {
+  0%        { opacity: 1; transform: scale(1); }
+  40%       { opacity: 1; transform: scale(1.25); }
+  60%, 100% { opacity: 0; transform: scale(0.7); }
+}
+@keyframes heartBroken {
+  0%, 45%   { opacity: 0; transform: scale(0.7); }
+  70%       { opacity: 1; transform: scale(1.15); }
+  100%      { opacity: 1; transform: scale(1); }
+}

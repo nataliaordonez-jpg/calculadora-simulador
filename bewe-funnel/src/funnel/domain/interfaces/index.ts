@@ -1,0 +1,6 @@
+export type { IBusinessConfig } from './business-config.interface'
+export type { IQuestion, IQuestionOption, IQuestionnaireAnswer, IQuestionnaireState } from './questionnaire.interface'
+export type { IPillarResult, IScenario, IROIResult } from './roi-result.interface'
+export type { IGrowthMetric, IGrowthDiagnostic } from './growth-diagnostic.interface'
+export type { IBeweScore } from './bewe-score.interface'
+export type { ILeadCaptureData, ILead } from './lead.interface'

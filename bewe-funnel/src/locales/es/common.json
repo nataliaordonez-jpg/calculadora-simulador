@@ -1,0 +1,11 @@
+{
+  "app_name": "Bewe Smart Funnel",
+  "continue": "Continuar",
+  "back": "Atrás",
+  "loading": "Cargando...",
+  "error_generic": "Algo salió mal. Intenta de nuevo.",
+  "currency_usd": "Dólares (USD)",
+  "currency_eur": "Euros (EUR)",
+  "currency_cop": "Pesos colombianos (COP)",
+  "currency_mxn": "Pesos mexicanos (MXN)"
+}
