@@ -28,10 +28,18 @@ export class SupabaseDiagnosticAdapter {
    * Este ID se usa para construir la URL pública /r/:shareId.
    */
   async saveDiagnosticSnapshot(input: SaveDiagnosticSnapshotInput): Promise<string | null> {
-    if (!isSupabaseConfigured() || !supabase) return null
+    console.log('[Diagnostic] isSupabaseConfigured:', isSupabaseConfigured())
+    if (!isSupabaseConfigured() || !supabase) {
+      console.warn('[Diagnostic] Supabase no configurado — revisa VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en .env.local')
+      return null
+    }
 
     const sessionId = await ensureFunnelSession()
-    if (!sessionId) return null
+    console.log('[Diagnostic] sessionId:', sessionId)
+    if (!sessionId) {
+      console.warn('[Diagnostic] No se pudo obtener sessionId')
+      return null
+    }
 
     const baseScenario = input.roiResult.scenarios.find((scenario) => scenario.type === 'base')
 
@@ -47,8 +55,10 @@ export class SupabaseDiagnosticAdapter {
       .upsert(businessPayload, { onConflict: 'session_id' })
 
     if (businessUpsert.error) {
+      console.error('[Diagnostic] Error en bf_business_profiles:', businessUpsert.error)
       throw new Error(`No se pudo guardar bf_business_profiles: ${businessUpsert.error.message}`)
     }
+    console.log('[Diagnostic] bf_business_profiles OK')
 
     const answersPayload = input.answers.map((answer) => ({
       session_id: sessionId,
@@ -65,8 +75,10 @@ export class SupabaseDiagnosticAdapter {
         .upsert(answersPayload, { onConflict: 'session_id,question_id' })
 
       if (answersUpsert.error) {
+        console.error('[Diagnostic] Error en bf_question_answers:', answersUpsert.error)
         throw new Error(`No se pudo guardar bf_question_answers: ${answersUpsert.error.message}`)
       }
+      console.log('[Diagnostic] bf_question_answers OK')
     }
 
     const resultPayload = {
@@ -92,18 +104,40 @@ export class SupabaseDiagnosticAdapter {
       },
     }
 
+    // 1) Upsert sin .select() para evitar el bug de PostgREST con RETURNING en UPDATEs
     const resultUpsert = await supabase
       .from('bf_diagnostic_results')
       .upsert(resultPayload, { onConflict: 'session_id' })
-      .select('id')
-      .single()
 
     if (resultUpsert.error) {
+      console.error('[Diagnostic] Error en bf_diagnostic_results upsert:', resultUpsert.error)
+      console.error('[Diagnostic] Payload enviado:', {
+        session_id: resultPayload.session_id,
+        bewe_score: resultPayload.bewe_score,
+        bewe_level: resultPayload.bewe_level,
+        bewe_label: resultPayload.bewe_label,
+      })
       throw new Error(`No se pudo guardar bf_diagnostic_results: ${resultUpsert.error.message}`)
     }
+    console.log('[Diagnostic] bf_diagnostic_results upsert OK')
 
-    // Retorna el UUID del registro — es el shareId para la URL pública
-    return resultUpsert.data?.id ?? null
+    // 2) SELECT separado para obtener el id — funciona tanto en INSERT como en UPDATE
+    const resultSelect = await supabase
+      .from('bf_diagnostic_results')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single()
+
+    console.log('[Diagnostic] SELECT id result:', resultSelect.data, 'error:', resultSelect.error)
+
+    if (resultSelect.error || !resultSelect.data?.id) {
+      console.error('[Diagnostic] No se pudo obtener el id:', resultSelect.error)
+      throw new Error(`No se pudo obtener el id de bf_diagnostic_results: ${resultSelect.error?.message ?? 'sin datos'}`)
+    }
+
+    console.log('[Diagnostic] shareId obtenido:', resultSelect.data.id)
+    // Retorna el UUID del registro — es el shareId para la URL pública /r/:id
+    return resultSelect.data.id as string
   }
 
   /**

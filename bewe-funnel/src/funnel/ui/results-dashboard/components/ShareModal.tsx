@@ -17,7 +17,9 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
   const [hoveredSocial, setHoveredSocial] = useState<string | null>(null)
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' })
 
-  const shareUrl = shareUrlProp ?? window.location.href
+  // shareUrl se actualiza reactivamente cuando llega el prop desde Supabase
+  const shareUrl = shareUrlProp ?? null
+  const isUrlReady = shareUrl !== null && shareUrl !== ''
 
   // Aparecer a los 3 segundos
   useEffect(() => {
@@ -57,6 +59,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
   }
 
   const copyURL = async () => {
+    if (!shareUrl) return
     try {
       await navigator.clipboard.writeText(shareUrl)
     } catch {
@@ -73,6 +76,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
   }
 
   const shareWhatsApp = () => {
+    if (!shareUrl) return
     const text = encodeURIComponent(
       `🎉 Mira el diagnóstico de ROI para ${businessName} con Linda IA:\n\n` +
       `💰 ROI Proyectado: ${roi.toLocaleString()}%\n` +
@@ -83,6 +87,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
   }
 
   const shareLinkedIn = () => {
+    if (!shareUrl) return
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
       '_blank'
@@ -90,6 +95,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
   }
 
   const shareTwitter = () => {
+    if (!shareUrl) return
     const text = encodeURIComponent(
       `Acabo de descubrir el potencial real de mi negocio 🚀\n\n` +
       `💰 ROI proyectado: ${roi.toLocaleString()}%\n` +
@@ -100,6 +106,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
   }
 
   const shareInstagram = () => {
+    if (!shareUrl) return
     setInstagramLoading(true)
     setTimeout(() => {
       generateInstagramImage()
@@ -335,10 +342,10 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
                 🎉
               </div>
 
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0A2540', lineHeight: '130%', marginBottom: '10px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0A2540', lineHeight: '130%', marginBottom: '10px', fontFamily: 'Inter, sans-serif' }}>
                 ¡Tu Diagnóstico está Listo!
               </h2>
-              <p style={{ fontSize: '1rem', fontWeight: 400, color: '#64748B', lineHeight: '150%' }}>
+              <p style={{ fontSize: '1rem', fontWeight: 400, color: '#64748B', lineHeight: '150%', fontFamily: 'Inter, sans-serif' }}>
                 Guarda y comparte tus resultados para acceder a ellos cuando quieras
               </p>
             </div>
@@ -348,33 +355,55 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
 
               {/* URL */}
               <div style={{ marginBottom: '28px' }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0A2540', marginBottom: '10px' }}>
-                  🔗 Tu enlace único:
+                <p style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', fontWeight: 600, color: '#0A2540', marginBottom: '10px', fontFamily: 'Inter, sans-serif' }}>
+                  {/* Solar: link-linear */}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  Tu enlace único:
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <input
-                    readOnly
-                    value={shareUrl}
-                    style={{
-                      flex: 1, padding: '12px 16px',
-                      border: '2px solid #E2E8F0', borderRadius: '12px',
+                  <div style={{
+                    flex: 1, padding: '12px 16px',
+                    border: `2px solid ${isUrlReady ? '#E2E8F0' : '#B0D2FC'}`,
+                    borderRadius: '12px',
+                    background: isUrlReady ? '#F8FAFC' : '#EFF6FF',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    overflow: 'hidden',
+                    transition: 'all 300ms',
+                  }}>
+                    {!isUrlReady && (
+                      <div style={{
+                        width: '14px', height: '14px', flexShrink: 0,
+                        border: '2px solid #B0D2FC', borderTopColor: '#60A5FA',
+                        borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+                      }} />
+                    )}
+                    <span style={{
                       fontFamily: 'monospace', fontSize: '0.8rem',
-                      background: '#F8FAFC', color: '#475569',
-                      outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}
-                  />
+                      color: isUrlReady ? '#475569' : '#60A5FA',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      flex: 1,
+                    }}>
+                      {isUrlReady ? shareUrl : 'Generando tu enlace único…'}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={copyURL}
+                    disabled={!isUrlReady}
                     style={{
                       padding: '12px 20px',
-                      background: copied ? '#34D399' : '#60A5FA',
+                      background: copied ? '#34D399' : isUrlReady ? '#60A5FA' : '#B0D2FC',
                       color: '#ffffff',
                       border: 'none', borderRadius: '12px',
                       fontSize: '0.875rem', fontWeight: 600,
-                      cursor: 'pointer', whiteSpace: 'nowrap',
+                      cursor: isUrlReady ? 'pointer' : 'not-allowed',
+                      whiteSpace: 'nowrap',
                       transition: 'all 200ms',
                       transform: copied ? 'translateY(-1px)' : 'none',
+                      opacity: isUrlReady ? 1 : 0.6,
                     }}
                   >
                     {copied ? '✓ Copiado' : 'Copiar'}
@@ -384,33 +413,39 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
 
               {/* Redes sociales */}
               <div>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0A2540', marginBottom: '12px' }}>
-                  📱 Comparte en tus redes:
+                <p style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', fontWeight: 600, color: '#0A2540', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>
+                  {/* Solar: share-linear */}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg>
+                  Comparte en tus redes:
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                   {socialButtons.map((social) => {
                     const isHovered = hoveredSocial === social.id
                     return (
-                      <button
+                        <button
                         key={social.id}
                         type="button"
                         onClick={social.onClick}
-                        onMouseEnter={() => setHoveredSocial(social.id)}
+                        onMouseEnter={() => isUrlReady && setHoveredSocial(social.id)}
                         onMouseLeave={() => setHoveredSocial(null)}
+                        disabled={!isUrlReady || (social.id === 'instagram' && instagramLoading)}
                         style={{
                           padding: '14px 8px',
-                          border: `2px solid ${isHovered ? social.color : '#E2E8F0'}`,
+                          border: `2px solid ${isHovered && isUrlReady ? social.color : '#E2E8F0'}`,
                           borderRadius: '12px',
-                          background: isHovered ? social.hoverBg : '#ffffff',
-                          color: isHovered ? '#ffffff' : social.color,
+                          background: isHovered && isUrlReady ? social.hoverBg : '#ffffff',
+                          color: isHovered && isUrlReady ? '#ffffff' : isUrlReady ? social.color : '#CBD5E1',
                           display: 'flex', flexDirection: 'column',
                           alignItems: 'center', gap: '8px',
-                          cursor: 'pointer',
-                          transform: isHovered ? 'translateY(-3px)' : 'none',
-                          boxShadow: isHovered ? `0 8px 20px ${social.color}44` : 'none',
+                          cursor: isUrlReady ? 'pointer' : 'not-allowed',
+                          transform: isHovered && isUrlReady ? 'translateY(-3px)' : 'none',
+                          boxShadow: isHovered && isUrlReady ? `0 8px 20px ${social.color}44` : 'none',
                           transition: 'all 200ms ease',
+                          opacity: isUrlReady ? 1 : 0.5,
                         }}
-                        disabled={social.id === 'instagram' && instagramLoading}
                       >
                         {social.icon}
                         <span style={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: '1' }}>
@@ -421,8 +456,13 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
                   })}
                 </div>
                 {/* Nota Instagram */}
-                <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '10px', textAlign: 'center' }}>
-                  📸 Instagram: genera y descarga una imagen lista para Stories
+                <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.75rem', color: '#94A3B8', marginTop: '10px', fontFamily: 'Inter, sans-serif', fontWeight: 400, lineHeight: '150%' }}>
+                  {/* Solar: camera-linear */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  Instagram: genera y descarga una imagen lista para Stories
                 </p>
               </div>
             </div>
@@ -453,46 +493,92 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
         </div>
       )}
 
-      {/* ── BOTÓN FLOTANTE ── */}
+      {/* ── BOTÓN FLOTANTE CON RING PULSANTE ── */}
       {showFloatingBtn && (
-        <button
-          type="button"
-          onClick={openModal}
-          title="Compartir resultados"
-          style={{
-            position: 'fixed',
-            bottom: '30px', right: '90px',
-            width: '56px', height: '56px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #60A5FA 0%, #34D399 100%)',
-            border: 'none',
-            color: '#ffffff',
-            cursor: 'pointer',
-            boxShadow: '0 8px 25px rgba(96,165,250,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9998,
-            animation: 'slideInBounce 500ms ease both',
-            transition: 'all 250ms ease',
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLButtonElement
-            el.style.transform = 'scale(1.12) translateY(-3px)'
-            el.style.boxShadow = '0 12px 35px rgba(96,165,250,0.55)'
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLButtonElement
-            el.style.transform = 'none'
-            el.style.boxShadow = '0 8px 25px rgba(96,165,250,0.45)'
-          }}
-        >
-          <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <circle cx="18" cy="5" r="3"/>
-            <circle cx="6" cy="12" r="3"/>
-            <circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-          </svg>
-        </button>
+        <>
+          <style>{`
+            @keyframes ringPulse {
+              0%, 100% { transform: scale(1); opacity: 0.75; }
+              50%       { transform: scale(1.45); opacity: 0; }
+            }
+          `}</style>
+
+          {/* Wrapper posiciona el conjunto; z-index y offset aquí */}
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '30px',
+              right: '90px',
+              zIndex: 9998,
+              animation: 'slideInBounce 500ms ease both',
+            }}
+          >
+            {/* Ring pulsante — animación via inline style (garantizada en React) */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: '-7px',
+                borderRadius: '50%',
+                border: '3px solid rgba(10,37,64,0.7)',
+                pointerEvents: 'none',
+                animation: 'ringPulse 2s ease-in-out infinite',
+                willChange: 'transform, opacity',
+              }}
+            />
+
+            {/* Botón — gradiente idéntico al fondo de la página de resultados */}
+            <button
+              type="button"
+              onClick={openModal}
+              title="Compartir resultados"
+              aria-label="Compartir resultados"
+              style={{
+                position: 'relative',
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #0A2540 0%, #1B4F8A 40%, #2E8B7A 75%, #34D399 100%)',
+                border: 'none',
+                color: '#ffffff',
+                cursor: 'pointer',
+                boxShadow: '0 8px 25px rgba(52,211,153,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLButtonElement
+                el.style.transform = 'translateY(-3px) scale(1.05)'
+                el.style.boxShadow = '0 12px 35px rgba(52,211,153,0.55)'
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLButtonElement
+                el.style.transform = 'none'
+                el.style.boxShadow = '0 8px 25px rgba(52,211,153,0.4)'
+              }}
+            >
+              <svg
+                width="26"
+                height="26"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+                style={{ transition: 'transform 0.3s ease' }}
+              >
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            </button>
+          </div>
+        </>
       )}
 
       {/* ── TOAST ── */}

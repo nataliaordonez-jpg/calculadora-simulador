@@ -69,6 +69,8 @@ export function LeadCapturePage() {
           <TeaserPreview
             beweScore={state.beweScore}
             businessName={state.businessConfig.businessName}
+            totalLoss={state.roiResult?.totalMonthlyBenefit}
+            currency={state.businessConfig.currency}
           />
           <LeadModal onSubmit={handleSubmit} isLoading={isLoading} />
         </div>

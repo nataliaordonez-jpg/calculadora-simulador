@@ -10,6 +10,9 @@ import { QUESTIONS } from '@funnel/domain/constants/questions.constant'
 import { Sector } from '@funnel/domain/enums/sector.enum'
 import type { IQuestionnaireAnswer } from '@funnel/domain/interfaces/questionnaire.interface'
 import { ScenarioType } from '@funnel/domain/enums/scenario-type.enum'
+import { SupabaseDiagnosticAdapter } from '@funnel/infrastructure/adapters/supabase-diagnostic.adapter'
+
+const _diagnosticAdapter = new SupabaseDiagnosticAdapter()
 
 interface ScenarioProjection {
   mes1_3: number
@@ -463,18 +466,29 @@ function ChatSimulation({ serviceType, businessName, sector }: { serviceType: st
   )
 }
 
-function HeartBreak() {
+function HeartBreak({ triggered }: { triggered: boolean }) {
   return (
-    <span className="relative inline-block" style={{ width: '1.4em', height: '1.4em', verticalAlign: 'middle' }}>
+    // key cambia cuando triggered pasa a true → reinicia la animación si el usuario vuelve a entrar en vista
+    <span
+      key={triggered ? 'active' : 'idle'}
+      className="relative inline-block"
+      style={{ width: '1.4em', height: '1.4em', verticalAlign: 'middle' }}
+    >
       <span
         className="absolute inset-0 flex items-center justify-center text-[1.8rem]"
-        style={{ animation: 'heartWhole 2s ease-in-out 1 forwards' }}
+        style={{
+          animation: triggered ? 'heartWhole 2s ease-in-out 2 forwards' : 'none',
+          opacity: triggered ? undefined : 1,
+        }}
       >
         ❤️
       </span>
       <span
         className="absolute inset-0 flex items-center justify-center text-[1.8rem]"
-        style={{ animation: 'heartBroken 2s ease-in-out 1 forwards' }}
+        style={{
+          animation: triggered ? 'heartBroken 2s ease-in-out 2 forwards' : 'none',
+          opacity: triggered ? undefined : 0,
+        }}
       >
         💔
       </span>
@@ -733,15 +747,24 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
 }
 
 export function ResultsDashboardPage() {
-  const { state } = useFunnelContext()
+  const { state, dispatch } = useFunnelContext()
   const { goToStep } = useFunnelNavigation()
   const act2Ref = useRef<HTMLElement>(null)
   const act7Ref = useRef<HTMLElement>(null)
   const scenarioContentRef = useRef<HTMLDivElement>(null)
   const [activeScenario, setActiveScenario] = useState<'conservador' | 'realista' | 'optimista'>('realista')
-  const [showScrollTop, setShowScrollTop] = useState(false)
   const [openFormula, setOpenFormula] = useState<number | null>(null)
   const [hoveredFormula, setHoveredFormula] = useState<number | null>(null)
+  const [rocketHovered, setRocketHovered] = useState(false)
+  /**
+   * URL de compartir definitiva.
+   * - Si ya hay shareId en contexto (flujo normal): construye la URL permanente inmediatamente.
+   * - Si no: arranca como null mientras se intenta guardar en Supabase.
+   * - Fallback garantizado: si Supabase falla/no está configurado → usa window.location.href.
+   */
+  const [shareUrl, setShareUrl] = useState<string | null>(
+    state.shareId ? `${window.location.origin}/r/${state.shareId}` : null
+  )
 
   const answersForRendering = useMemo(() => {
     return state.questionnaire.answers.length > 0 ? state.questionnaire.answers : generateMockAnswers()
@@ -786,6 +809,8 @@ export function ResultsDashboardPage() {
 
   const [heroRef, heroVisible] = useInView<HTMLDivElement>(0.35)
   const [totalRef, totalVisible] = useInView<HTMLDivElement>(0.45)
+  // HeartBreak: se activa cuando el título está al 50% de la pantalla
+  const [heartRef, heartVisible] = useInView<HTMLHeadingElement>(0.5)
   const heroAmount = useCountUp(data.totalPerdidaMensual, heroVisible, 2000)
   const totalAmount = useCountUp(data.totalPerdidaMensual, totalVisible, 1700)
   const stickyDiff = data.escenarioRealista.mes4_6 + data.totalPerdidaMensual
@@ -822,12 +847,66 @@ export function ResultsDashboardPage() {
   const handleScheduleDemo = () => window.open('https://bewe.co/demo', '_blank')
   const handleFreeTrial = () => window.open('https://bewe.co/demo', '_blank')
 
+  /**
+   * Garantiza que siempre haya una shareUrl disponible.
+   * 1. Si ya tenemos URL (shareId del contexto) → no hace nada.
+   * 2. Si no → intenta guardar en Supabase y obtener la URL permanente /r/:id.
+   * 3. Si Supabase falla, retorna null, o supera 8s → usa window.location.href como fallback.
+   */
   useEffect(() => {
-    const onScroll = () => {
-      setShowScrollTop(window.scrollY > 1600)
+    if (shareUrl) return // Ya tenemos URL — no hacer nada
+
+    let cancelled = false
+
+    // Timeout de seguridad: si en 8s no llegó respuesta, usamos la URL actual
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled) setShareUrl(window.location.href)
+    }, 8000)
+
+    const { calculated, config } = fullResults
+    void _diagnosticAdapter.saveDiagnosticSnapshot({
+      businessConfig: config,
+      answers: answersForRendering,
+      roiResult: calculated.roi,
+      growthDiagnostic: calculated.growth,
+      beweScore: calculated.beweScore,
+    }).then((id) => {
+      clearTimeout(fallbackTimer)
+      if (cancelled) return
+      if (id) {
+        const permanentUrl = `${window.location.origin}/r/${id}`
+        setShareUrl(permanentUrl)
+        dispatch({ type: 'SET_SHARE_ID', payload: id })
+      } else {
+        // Supabase no configurado (sin .env.local) o no devolvió ID → fallback a URL actual
+        console.warn('[ShareUrl] Supabase no configurado o no retornó ID. ¿Existe el archivo .env.local?')
+        setShareUrl(window.location.href)
+      }
+    }).catch((err: unknown) => {
+      clearTimeout(fallbackTimer)
+      console.error('[ShareUrl] Error guardando en Supabase:', err)
+      if (!cancelled) setShareUrl(window.location.href)
+    })
+
+    return () => {
+      cancelled = true
+      clearTimeout(fallbackTimer)
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Solo al montar
+
+  // Si ProcessingPage termina de guardar mientras el usuario ya está aquí,
+  // actualizar shareUrl con la URL permanente (mejor que la fallback)
+  useEffect(() => {
+    if (state.shareId && (!shareUrl || !shareUrl.includes('/r/'))) {
+      setShareUrl(`${window.location.origin}/r/${state.shareId}`)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.shareId])
+
+  // Scroll inmediato al hero al montar (evita que React Router mantenga scroll previo)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }, [])
 
   return (
@@ -838,11 +917,7 @@ export function ResultsDashboardPage() {
         roi={data.escenarioRealista.roi}
         potentialMonthly={data.escenarioRealista.mes4_6}
         formatCurrency={formatCurrency}
-        shareUrl={
-          state.shareId
-            ? `${window.location.origin}/r/${state.shareId}`
-            : window.location.href
-        }
+        shareUrl={shareUrl ?? undefined}
       />
 
       <div className="relative">
@@ -982,8 +1057,8 @@ export function ResultsDashboardPage() {
 
         <section className="py-[100px] px-6 md:px-12">
           <div className="max-w-[900px] mx-auto">
-            <h2 className="text-h1 text-white mb-16 text-center flex items-center justify-center gap-3" style={{ marginBottom: '48px' }}>
-              <HeartBreak />
+            <h2 ref={heartRef} className="text-h1 text-white mb-16 text-center flex items-center justify-center gap-3" style={{ marginBottom: '48px' }}>
+              <HeartBreak triggered={heartVisible} />
               Aquí es donde se te escapa el dinero
             </h2>
             <div className="space-y-6">
@@ -1289,87 +1364,132 @@ export function ResultsDashboardPage() {
 
 
         {/* ── ACTO 7: CTA FREE TRIAL ── */}
-        <section ref={act7Ref} className="py-[100px] px-6 md:px-12" style={{ marginTop: '80px' }}>
-          <div className="max-w-[1200px] mx-auto">
+        <style>{`
+          @keyframes coheteVuela {
+            0%   { transform: translateY(0px) rotate(0deg); }
+            15%  { transform: translateY(-10px) rotate(-4deg); }
+            30%  { transform: translateY(-18px) rotate(4deg); }
+            45%  { transform: translateY(-22px) rotate(-2deg); }
+            60%  { transform: translateY(-18px) rotate(3deg); }
+            75%  { transform: translateY(-10px) rotate(-4deg); }
+            90%  { transform: translateY(-3px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+          }
+          @keyframes coheteDespega {
+            0%   { transform: translateY(0px) scale(1) rotate(0deg); opacity: 1; }
+            25%  { transform: translateY(-10px) scale(1.08) rotate(-8deg); opacity: 1; }
+            55%  { transform: translateY(-45px) scale(1.18) rotate(5deg); opacity: 0.75; }
+            80%  { transform: translateY(-70px) scale(1.25) rotate(0deg); opacity: 0.35; }
+            100% { transform: translateY(-90px) scale(1.3) rotate(0deg); opacity: 0; }
+          }
+        `}</style>
+        <section ref={act7Ref} className="px-6 md:px-12" style={{ paddingTop: '64px', paddingBottom: '60px', marginTop: '48px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
-            <div className="text-center mb-12">
-              <h2 className="text-h1 text-white text-center">Tu diagnóstico completo está listo</h2>
-              <p className="text-body mt-3" style={{ color: 'rgba(255,255,255,0.7)' }}>Activa tu free trial hoy y empieza a recuperar lo que estás perdiendo</p>
+            {/* Título principal — mismo estilo que "¿Y si pudieras recuperar todo eso?" */}
+            <h2 className="font-black" style={{ fontSize: '3.5rem', lineHeight: '1.1', fontWeight: 900, color: 'white', marginBottom: '16px', fontFamily: 'Inter, sans-serif' }}>
+              Tu diagnóstico completo está listo 🎉
+            </h2>
+
+            {/* Subtítulo — Body: 1rem / 400 / line-height 150% */}
+            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)', marginBottom: '48px', fontWeight: 400, lineHeight: '150%', fontFamily: 'Inter, sans-serif' }}>
+              Únete a los{' '}
+              <strong style={{ color: '#34D399', fontWeight: 600 }}>500+ negocios</strong>
+              {' '}que ya recuperaron lo que estaban perdiendo
+            </p>
+
+            {/* Botón principal gigante con cohete animado */}
+            <button
+              type="button"
+              onClick={handleFreeTrial}
+              style={{
+                background: 'linear-gradient(135deg,#34D399,#2FBE8A)',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '40px 48px',
+                cursor: 'pointer',
+                boxShadow: rocketHovered ? '0 20px 50px rgba(52,211,153,0.5)' : '0 15px 40px rgba(52,211,153,0.4)',
+                transform: rocketHovered ? 'translateY(-5px)' : 'translateY(0)',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                maxWidth: '700px',
+                width: '100%',
+                marginBottom: '32px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={() => setRocketHovered(true)}
+              onMouseLeave={() => setRocketHovered(false)}
+            >
+              {/* Efecto brillo deslizante */}
+              <span aria-hidden="true" style={{
+                position: 'absolute', top: 0, width: '100%', height: '100%',
+                background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)',
+                pointerEvents: 'none',
+                left: rocketHovered ? '100%' : '-100%',
+                transition: rocketHovered ? 'left 0.55s ease' : 'none',
+              }} />
+
+              {/* Cohete — animación vía inline style controlada por estado React */}
+              <span style={{
+                fontSize: '48px',
+                display: 'block',
+                lineHeight: 1,
+                transformOrigin: 'center',
+                willChange: 'transform',
+                animation: rocketHovered
+                  ? 'coheteDespega 0.8s ease-out forwards'
+                  : 'coheteVuela 2s ease-in-out infinite',
+              }}>🚀</span>
+
+              {/* Línea 1 — H2: 1.5rem / 600 / line-height 130% */}
+              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: 'white', lineHeight: '130%', fontFamily: 'Inter, sans-serif' }}>
+                Activar mi Free Trial de 15 días
+              </span>
+
+              {/* Línea 2 — Small: 0.875rem / 400 / line-height 150% */}
+              <span style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.9)', fontWeight: 400, lineHeight: '150%', fontFamily: 'Inter, sans-serif' }}>
+                Empieza a recuperar {formatCurrency(data.escenarioRealista.mes4_6)}/mes esta semana
+              </span>
+            </button>
+
+            {/* Garantías — Small: 0.875rem / 400 / line-height 150% */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '40px', flexWrap: 'wrap' }}>
+              {[
+                'Sin tarjeta de crédito',
+                'Configuración en 24 horas',
+                'Resultados en la primera semana',
+                'Cancela cuando quieras',
+              ].map((g) => (
+                <span key={g} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', fontFamily: 'Inter, sans-serif' }}>
+                  <IconComponent icon="solar:check-circle-linear" size="sm" color="#34D399" />
+                  {g}
+                </span>
+              ))}
             </div>
 
-            {/* Grid 2 columnas */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' }}>
-
-              {/* Columna 1 – Beneficios del Trial */}
-              <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '20px', padding: '32px' }}>
-                <p className="text-h3 text-white font-bold mb-6">¿Qué incluye tu Free Trial de 15 días?</p>
-                {[
-                  { icon: 'solar:settings-linear',        color: '#60A5FA', title: 'Configuración en 24 horas',      desc: 'Te conectamos Linda a tus canales de atención sin que muevas un dedo.' },
-                  { icon: 'solar:brain-linear',            color: '#34D399', title: 'Entrenamiento con tu negocio',   desc: 'Linda aprende de tus servicios, precios y respuestas habituales desde el día 1.' },
-                  { icon: 'solar:chart-square-linear',     color: '#FAD19E', title: 'Dashboard de resultados',        desc: 'Visualiza en tiempo real cuántas consultas atiende Linda y qué está generando.' },
-                  { icon: 'solar:headphones-round-linear', color: '#67E8F9', title: 'Soporte dedicado',               desc: 'Un experto disponible para ajustar y optimizar durante todo el período.' },
-                  { icon: 'solar:refresh-linear',          color: '#34D399', title: 'Ajustes ilimitados',             desc: 'Modificamos respuestas, flujos y tono hasta que se sienta 100% tuya.' },
-                ].map(({ icon, color, title, desc }) => (
-                  <div key={title} style={{ display: 'flex', gap: '14px', marginBottom: '20px', alignItems: 'flex-start' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <IconComponent icon={icon} size="sm" color={color} />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white', marginBottom: '2px' }}>{title}</p>
-                      <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: '1.5' }}>{desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Columna 2 – Tu Oportunidad */}
-              <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '20px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <p className="text-h3 text-white font-bold mb-2">Tu oportunidad identificada</p>
-
-                <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '14px', padding: '20px' }}>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#F87171', letterSpacing: '0.1em', marginBottom: '6px' }}>ESTÁS DEJANDO DE GANAR</p>
-                  <p style={{ fontSize: '2.2rem', fontWeight: 900, color: '#F87171' }}>-{formatCurrency(data.totalPerdidaMensual)}/mes</p>
-                  <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Cada mes que pasa sin actuar</p>
-                </div>
-
-                <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '14px', padding: '20px' }}>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#34D399', letterSpacing: '0.1em', marginBottom: '6px' }}>PODRÍAS ESTAR GANANDO</p>
-                  <p style={{ fontSize: '2.2rem', fontWeight: 900, color: '#34D399' }}>+{formatCurrency(data.escenarioRealista.mes4_6)}/mes</p>
-                  <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Escenario realista con Linda IA</p>
-                </div>
-
-                <div style={{ background: 'rgba(10,37,64,0.6)', border: '2px solid #34D399', borderRadius: '14px', padding: '20px' }}>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.1em', marginBottom: '6px' }}>DIFERENCIA TOTAL</p>
-                  <p style={{ fontSize: '2.6rem', fontWeight: 900, color: '#34D399' }}>{formatCurrency(data.totalPerdidaMensual + data.escenarioRealista.mes4_6)}/mes</p>
-                  <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Lo que está en juego cada mes</p>
-                </div>
-              </div>
+            {/* Separador */}
+            <div style={{ margin: '0 auto 32px', maxWidth: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.25)' }} />
+              {/* Small: 0.875rem / 400 */}
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem', fontWeight: 400, fontFamily: 'Inter, sans-serif' }}>o</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.25)' }} />
             </div>
 
-            {/* Botón principal CTA */}
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <button
-                type="button"
-                onClick={handleFreeTrial}
-                style={{ background: 'linear-gradient(135deg,#34D399,#2FBE8A)', border: 'none', borderRadius: '999px', padding: '18px 48px', fontSize: '1.1rem', fontWeight: 700, color: 'white', cursor: 'pointer', boxShadow: '0 8px 32px rgba(52,211,153,0.35)', transition: 'all 300ms', display: 'inline-flex', alignItems: 'center', gap: '10px' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.04)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 12px 40px rgba(52,211,153,0.5)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(52,211,153,0.35)' }}
-              >
-                <IconComponent icon="solar:bolt-linear" size="sm" color="#fff" />
-                Activar mi Free Trial de 15 Días
-              </button>
-
-              {/* 4 garantías */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '16px', flexWrap: 'wrap' }}>
-                {['Sin tarjeta de crédito', 'Configuración en 24h', 'Resultados en semana 1', 'Cancela cuando quieras'].map((g) => (
-                  <span key={g} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                    <IconComponent icon="solar:check-circle-linear" size="sm" color="#34D399" />
-                    {g}
-                  </span>
-                ))}
-              </div>
-            </div>
-
+            {/* Link "Ya soy cliente" — Body: 1rem / 400 / line-height 150% */}
+            <a
+              href="https://app.bewe.co"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', fontWeight: 400, lineHeight: '150%', textDecoration: 'none', display: 'inline-block', padding: '10px 0', borderBottom: '2px solid transparent', transition: 'color 0.3s ease, border-color 0.3s ease', fontFamily: 'Inter, sans-serif' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'white'; (e.currentTarget as HTMLAnchorElement).style.borderBottomColor = 'rgba(255,255,255,0.5)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLAnchorElement).style.borderBottomColor = 'transparent'; }}
+            >
+              Ya soy cliente de Bewe →
+            </a>
 
           </div>
         </section>
@@ -1415,7 +1535,7 @@ export function ResultsDashboardPage() {
         </section>
 
         {/* ── SECCIÓN: FÓRMULAS ── */}
-        <section className="py-[80px] px-6 md:px-12" style={{ marginTop: '80px' }}>
+        <section className="px-6 md:px-12" style={{ marginTop: '80px', paddingTop: '80px', paddingBottom: '80px' }}>
           <div className="max-w-[1200px] mx-auto">
 
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
@@ -1563,16 +1683,6 @@ export function ResultsDashboardPage() {
           </div>
         </section>
 
-        {showScrollTop && (
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed right-4 md:right-8 bottom-24 min-[1400px]:bottom-10 z-40 rounded-full bg-primary-400 text-white w-11 h-11 shadow-lg hover:scale-105 transition-transform"
-            aria-label="Volver al inicio"
-          >
-            ↑
-          </button>
-        )}
       </div>
     </FunnelLayout>
   )
