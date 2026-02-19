@@ -1,0 +1,508 @@
+---
+description: Estándares de documentación de análisis web para reportes sistemáticos y comprensivos de análisis de interfaces web
+alwaysApply: false
+triggerPatterns: ["documentation_web", "web documentation", "web analysis documentation", "document web analysis", "documenta web", "documentación web"]
+context: "Metodología de documentación para resultados de análisis de interfaces de productos web"
+---
+
+# Reglas de Documentación de Análisis Web
+
+Aplica esta regla para crear documentación comprensiva después de completar el análisis de interfaces de productos web.
+
+## Propósito de la Documentación
+
+Esta regla define la **fase de documentación** que sigue al análisis de interfaz web, enfocándose en:
+- **Organización sistemática** de hallazgos de análisis
+- **Formatos de reporte estandarizados** para consistencia
+- **Capacidades de referencia cruzada** para análisis comparativo
+- **Creación de entregables profesionales** para partes interesadas
+
+## Estructura de Documentación Requerida
+
+### Anexo: Índice de Flujo Obligatorio
+- Crear `04_Web_Analysis/User_Flows_By_Page_TEXT.md` como el índice autoritativo de flujos de usuario por página con una lista de verificación de funcionalidades por página. Enlazar cruzadamente desde `02_Page_Analysis_TEXT.md`.
+
+### **Archivos de Documentación Central**
+
+#### **1. Visión General de Interfaz Web (`01_Web_Interface_Overview_TEXT.md`)**
+**Propósito**: Resumen de alto nivel del análisis de interfaz
+**Requisitos de Contenido**:
+- Propósito de la interfaz y flujos de trabajo de usuario primarios
+- Estructura de navegación y arquitectura de información
+- Patrones de UI clave y principios de diseño
+- Diferencias de experiencia móvil vs escritorio
+- Resumen de cobertura (porcentaje de elementos analizados)
+
+**Estructura de Plantilla**:
+```markdown
+# Visión General de Interfaz Web - [Nombre del Producto]
+
+## Resumen de Interfaz
+- **Tipo de Plataforma**: [Aplicación Web/SaaS/Sitio Web]
+- **Propósito Primario**: [Descripción breve]
+- **Usuarios Objetivo**: [Personas de usuario identificadas]
+- **Cobertura de Análisis**: [X/Y páginas analizadas] ([%] completo)
+
+## Arquitectura de Navegación
+- [Estructura de navegación principal]
+- [Patrones de navegación secundaria]
+- [Organización de jerarquía de información]
+
+## Patrones de UI Clave
+- [Elementos de diseño consistentes]
+- [Patrones de interacción]
+- [Principios de diseño visual]
+
+## Experiencia de Dispositivo
+- **Experiencia de Escritorio**: [Resumen de interfaz de escritorio]
+- **Experiencia Móvil**: [Análisis de optimización móvil]
+- **Comportamiento Responsivo**: [Consistencia entre dispositivos]
+```
+
+#### **2. Análisis Página por Página (`02_Page_Analysis_TEXT.md`)**
+**Propósito**: Desglose detallado de cada sección de interfaz analizada
+**Requisitos de Contenido**:
+- Desglose detallado de cada sección de interfaz analizada
+- Inventario de elementos interactivos por página
+- Análisis de formularios e inputs con comportamientos de validación
+- Documentación de modales y superposiciones
+- Mapeo de funcionalidad específica de página
+
+**Estructura de Plantilla**:
+```markdown
+# Análisis Página por Página
+
+## Inventario de Página
+| Página/Sección | Elementos Analizados | Formularios | Modales | Cobertura |
+|----------------|----------------------|-------------|---------|-----------|
+| [Página 1] | [X] elementos | [Y] formularios | [Z] modales | [%] |
+| [Página 2] | [X] elementos | [Y] formularios | [Z] modales | [%] |
+
+## Análisis Detallado de Página
+
+### [Nombre de Página 1]
+**Propósito**: [Descripción de función de página]
+**Patrón URL**: [Estructura URL]
+**Acceso de Navegación**: [Cómo llegan los usuarios a esta página]
+
+#### Elementos Interactivos
+- **Botones**: [Listar todos los botones con funciones]
+- **Enlaces**: [Todos los enlaces de navegación]
+- **Formularios**: [Campos de formulario y validación]
+- **Desplegables**: [Opciones de menú y comportamientos]
+
+#### Análisis de Contenido
+- **Información Mostrada**: [Tipos de contenido clave]
+- **Entrada de Datos**: [Requisitos de input]
+- **Acciones de Usuario**: [Operaciones disponibles]
+
+#### Observaciones Técnicas
+- **Comportamiento de Carga**: [Características de carga de página]
+- **Manejo de Errores**: [Estados de error observados]
+- **Rendimiento**: [Observaciones de tiempo de respuesta]
+```
+
+#### **3. Documentación de Flujo de Usuario (`03_User_Flows_TEXT.md`)**
+**Propósito**: Mapeo completo del viaje del usuario
+**Requisitos de Contenido**:
+- Mapeo completo del viaje del usuario desde entrada hasta finalización
+- Flujos de trabajo de finalización de tareas con recuentos de pasos
+- Documentación de manejo de errores y casos borde
+- Flujos administrativos y de superusuario
+- Análisis de procesos de múltiples pasos (wizards, formularios, flujos de pago)
+
+**Estructura de Plantilla**:
+```markdown
+# Documentación de Flujo de Usuario
+
+## Viajes de Usuario Primarios
+
+### [Tarea Central 1]: [Nombre de Tarea]
+**Punto de Inicio**: [Punto de entrada]
+**Punto Final**: [Estado de finalización]
+**Pasos Totales**: [X] pasos
+**Tiempo Promedio**: [Duración estimada]
+
+#### Flujo Paso a Paso
+1. **[Paso 1]**: [Acción] → [Resultado]
+2. **[Paso 2]**: [Acción] → [Resultado]
+3. **[Paso 3]**: [Acción] → [Resultado]
+
+#### Rutas Alternativas
+- **Ruta Feliz**: [Ruta de finalización estándar]
+- **Recuperación de Error**: [Qué sucede en errores]
+- **Cancelación**: [Cómo pueden salir los usuarios]
+
+#### Puntos de Validación
+- [Reglas de validación de input]
+- [Verificaciones de lógica de negocio]
+- [Verificaciones de permisos de usuario]
+
+### [Tarea Central 2]: [Nombre de Tarea]
+[Seguir misma estructura para cada flujo de trabajo mayor]
+
+## Flujos Administrativos
+- **Gestión de Usuarios**: [Flujos de trabajo específicos de admin]
+- **Configuración del Sistema**: [Flujos de configuración y ajustes]
+- **Reportes**: [Procesos de analítica y exportación]
+```
+
+#### **4. Evaluación UI/UX (`04_UX_Assessment_TEXT.md`)**
+**Propósito**: Evaluación de usabilidad y análisis de experiencia de usuario
+**Requisitos de Contenido**:
+- Evaluación de usabilidad e identificación de puntos de dolor
+- Análisis de patrones de diseño y evaluación de consistencia
+- Evaluación de accesibilidad y revisión de navegación por teclado
+- Evaluación de experiencia móvil y análisis de diseño responsivo
+- Evaluación de onboarding de usuario y sistema de ayuda
+
+**Estructura de Plantilla**:
+```markdown
+# Evaluación UI/UX
+
+## Análisis de Usabilidad
+
+### Fortalezas
+- **[Fortaleza 1]**: [Ejemplo específico e impacto]
+- **[Fortaleza 2]**: [Ejemplo específico e impacto]
+- **[Fortaleza 3]**: [Ejemplo específico e impacto]
+
+### Puntos de Dolor
+- **[Problema 1]**: [Descripción del problema e impacto en usuario]
+- **[Problema 2]**: [Descripción del problema e impacto en usuario]
+- **[Problema 3]**: [Descripción del problema e impacto en usuario]
+
+### Métricas de Eficiencia
+- **Finalización de Tarea**: [Pasos promedio para tareas centrales]
+- **Eficiencia de Navegación**: [Clicks para alcanzar características clave]
+- **Prevención de Errores**: [Qué tan bien la UI previene errores]
+
+## Análisis de Patrones de Diseño
+
+### Evaluación de Consistencia
+- **Consistencia Visual**: [Estandarización de elementos UI]
+- **Consistencia de Interacción**: [Uniformidad de patrones de comportamiento]
+- **Arquitectura de Información**: [Lógica de organización de contenido]
+
+### Principios de Diseño Moderno
+- **Jerarquía Visual**: [Claridad de priorización de información]
+- **Uso de Espacio en Blanco**: [Espacio de respiración del layout]
+- **Color y Tipografía**: [Coherencia del sistema de diseño]
+
+## Evaluación de Accesibilidad
+
+### Navegación por Teclado
+- **Orden de Tab**: [Progresión lógica de foco]
+- **Soporte de Etiquetas de Letras**: [Compatibilidad con Rango/extensión de teclado]
+- **Disponibilidad de Atajos**: [Atajos de teclado descubiertos]
+
+### Brechas de Accesibilidad
+- **Elementos No-Teclado**: [Elementos que requieren interacción de mouse]
+- **Indicadores de Foco**: [Visibilidad de estados de foco]
+- **Compatibilidad con Lector de Pantalla**: [Evaluación de marcado semántico]
+
+## Evaluación de Experiencia Móvil
+
+### Optimización Móvil
+- **Diseño Responsivo**: [Calidad de adaptación de layout]
+- **Interacción Táctil**: [Tamaño y espaciado de objetivos táctiles]
+- **Características Específicas Móviles**: [Funcionalidad optimizada para móvil]
+
+### Consistencia Entre Dispositivos
+- **Paridad de Características**: [Disponibilidad de características escritorio vs móvil]
+- **Rendimiento**: [Carga y responsividad móvil]
+- **Usabilidad**: [Eficiencia de finalización de tarea móvil]
+```
+
+#### **5. Diagramas de Flujo Visual (`05_Web_Flows_MERMAID.md`)**
+**Propósito**: Representación visual de flujos de usuario e interacciones del sistema
+**Requisitos de Contenido**:
+- Flujos de navegación página a página con puntos de decisión
+- Diagramas de procesos de múltiples pasos (wizards, formularios, flujos de trabajo)
+- Flujos de manejo de errores y recuperación
+- Flujos de integración y servicios externos
+- Diagramas de inferencia de interacción backend
+
+**Estructura de Plantilla**:
+```markdown
+# Diagramas de Flujo Visual
+
+## Visión General de Flujo de Navegación
+
+```mermaid
+flowchart TD
+    Entry["🏠 Landing Page"] --> Auth{"🔐 Autenticación"}
+    Auth -->|Logueado| Dashboard["📊 Dashboard Principal"]
+    Auth -->|No Logueado| Login["📝 Formulario Login"]
+    Login --> Dashboard
+    
+    Dashboard --> Feature1["⚙️ Característica 1"]
+    Dashboard --> Feature2["📋 Característica 2"]
+    Dashboard --> Feature3["📈 Característica 3"]
+    
+    Feature1 --> Workflow1["🔄 Proceso Multi-Paso"]
+    Workflow1 --> Step1["Paso 1: Input"]
+    Workflow1 --> Step2["Paso 2: Validación"]
+    Workflow1 --> Step3["Paso 3: Confirmación"]
+    
+    Step1 --> Backend1[("💾 Guardar Datos")]
+    Step2 --> Backend2[("✅ Validar")]
+    Step3 --> Backend3[("🎉 Completar")]
+```
+
+## Diagramas de Flujo de Trabajo de Usuario Central
+
+### [Flujo de Trabajo 1]: [Nombre de Tarea Central]
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Backend
+    
+    User->>UI: [Acción 1]
+    UI->>Backend: [Llamada API 1]
+    Backend-->>UI: [Respuesta 1]
+    UI-->>User: [Retroalimentación 1]
+    
+    User->>UI: [Acción 2]
+    UI->>Backend: [Llamada API 2]
+    Backend-->>UI: [Respuesta 2]
+    UI-->>User: [Finalización]
+```
+
+### Flujos de Manejo de Errores
+
+```mermaid
+flowchart TD
+    Action["👤 Acción de Usuario"] --> Validation{"✅ Input Válido?"}
+    Validation -->|Sí| Process["🔄 Procesar Solicitud"]
+    Validation -->|No| Error["⚠️ Mostrar Error"]
+    
+    Process --> Success{"🎯 Éxito?"}
+    Success -->|Sí| Complete["✅ Tarea Completa"]
+    Success -->|No| Failure["❌ Error de Sistema"]
+    
+    Error --> Retry["🔄 Permitir Reintento"]
+    Failure --> Retry
+    Retry --> Action
+```
+```
+
+#### **6. Observaciones Técnicas (`06_Technical_Observations_TEXT.md`)**
+**Propósito**: Análisis de implementación técnica desde perspectiva UI
+**Requisitos de Contenido**:
+- Análisis de rendimiento e identificación de cuellos de botella
+- Inferencia de patrones de API desde comportamiento UI
+- Observaciones de seguridad desde análisis de interfaz
+- Notas de compatibilidad de navegador y dispositivo
+- Evaluación de stack tecnológico frontend
+
+**Estructura de Plantilla**:
+```markdown
+# Observaciones Técnicas
+
+## Análisis de Rendimiento
+
+### Características de Carga
+- **Carga Inicial de Página**: [Observaciones de tiempo y comportamiento]
+- **Navegación Subsecuente**: [Rendimiento de transición de página]
+- **Grandes Conjuntos de Datos**: [Cómo maneja la interfaz datos masivos]
+- **Actualizaciones en Tiempo Real**: [Mecanismos de actualización de datos en vivo]
+
+### Cuellos de Botella de Rendimiento
+- **Secciones de Carga Lenta**: [Áreas específicas con retrasos]
+- **Operaciones Pesadas**: [Interacciones intensivas en recursos]
+- **Rendimiento Móvil**: [Problemas de rendimiento específicos de dispositivo]
+
+## Análisis de Patrón de API
+
+### Comunicación Frontend-Backend
+- **Patrones de Solicitud**: [Comportamientos de llamadas API observables]
+- **Carga de Datos**: [Cómo se pueblan los datos en la interfaz]
+- **Respuestas de Error**: [Cómo se muestran los errores de API]
+- **Comportamiento de Caché**: [Observaciones de persistencia de datos]
+
+### Gestión de Estado
+- **Estado de Aplicación**: [Cómo se mantiene el estado UI]
+- **Manejo de Sesión**: [Comportamiento de login/logout]
+- **Sincronización de Datos**: [Características multi-usuario o tiempo real]
+
+## Observaciones de Seguridad
+
+### Características de Seguridad
+- **Flujo de Autenticación**: [Medidas de seguridad login/logout]
+- **Protección de Datos**: [Manejo de información sensible]
+- **Control de Acceso**: [Restricciones de características basadas en roles]
+
+### Preocupaciones de Seguridad
+- **Información Expuesta**: [Datos potencialmente sensibles visibles]
+- **Validación de Input**: [Robustez de validación lado cliente]
+- **Gestión de Sesión**: [Seguridad de sesiones de usuario]
+
+## Compatibilidad de Navegador
+
+### Comportamiento Entre Navegadores
+- **Navegador Primario**: [Navegador usado para análisis]
+- **Diseño Responsivo**: [Comportamiento de adaptación de layout]
+- **Funcionalidad JavaScript**: [Confiabilidad de características interactivas]
+
+### Evaluación de Stack Tecnológico
+- **Framework Frontend**: [Patrones de framework observables]
+- **Librerías UI**: [Evidencia de librería de componentes]
+- **Herramientas de Construcción**: [Indicadores de herramientas de desarrollo]
+```
+
+### **Estándares de Salida Mejorados**
+
+#### **📸 Protocolo de Documentación de Screenshots**
+
+**Categorías de Screenshot para Documentación**:
+1. **🏠 Estados de Página**: Cada página/vista única analizada
+2. **📝 Estados de Formulario**: Vacío, lleno, errores de validación, estados de éxito
+3. **🔧 Estados de Modal**: Todos los diálogos popup, superposiciones, menús desplegables
+4. **⚠️ Estados de Error**: Mensajes de error, diálogos de advertencia, escenarios de falla
+5. **✅ Estados de Éxito**: Páginas de confirmación, mensajes de éxito, flujos de finalización
+6. **🎯 Estados Interactivos**: Efectos hover, indicadores de foco, elementos activos
+7. **📱 Estados Responsivos**: Diferencias de layout móvil vs escritorio
+
+**Requisitos de Calidad de Screenshot**:
+- **Capturas solo-webapp**: Nunca incluir chrome del navegador o elementos del SO
+- **Composición limpia**: Enfocarse exclusivamente en contenido de interfaz de aplicación
+- **Texto legible**: Todo el texto UI debe ser claramente legible
+- **Elementos completos**: Sin botones, formularios, o componentes de interfaz cortados
+- **Claridad contextual**: Incluir suficiente contexto circundante para análisis
+- **Calidad consistente**: Mantener misma resolución y claridad a través de capturas
+
+**Estándares de Anotación**:
+- **Resaltar elementos interactivos**: Usar cajas/flechas rojas para botones, enlaces, formularios
+- **Numerar secuencias de interacción**: 1, 2, 3 para procesos de múltiples pasos
+- **Etiquetar componentes clave**: Añadir etiquetas de texto para elementos UI importantes
+- **Marcar indicadores de foco**: Mostrar estados de foco de navegación por teclado
+- **Documentar atajos de teclado**: Notar combinaciones de teclado descubiertas
+
+#### **Estándares de Diagramas Mermaid**
+
+**Requisitos de Diseño Visual**:
+- **Usar emojis y etiquetas claras** para claridad visual inmediata
+- **Nodos backend**: Formas circulares `[("Proceso Backend")]`
+- **Páginas frontend**: Formas rectangulares `["🏠 Nombre de Página"]`
+- **Acciones de usuario**: Etiquetas orientadas a la acción `["➕ Crear Ítem"]`
+- **Puntos de decisión**: Formas de diamante para elecciones de usuario
+- **Estados de error**: Codificación de color rojo y emojis de advertencia
+
+**Tipos de Diagramas Requeridos**:
+1. **Diagrama de Visión General del Sistema**: Flujo de arquitectura de alto nivel
+2. **Diagramas de Viaje de Usuario**: Flujos de finalización de tarea de extremo a extremo
+3. **Diagramas de Flujo Técnico**: Procesos backend e inferencia de flujo de datos
+4. **Diagramas de Manejo de Errores**: Escenarios de falla y rutas de recuperación
+
+## Métricas de Análisis Estandarizadas
+
+### **Plantilla de Métricas de Análisis Web**
+
+```markdown
+## Métricas de Análisis Web
+
+### **Puntaje de Experiencia de Usuario**
+- **Eficiencia de Navegación**: [Excelente/Bueno/Pobre] - Promedio de clicks para completar tareas
+- **Optimización Móvil**: [Responsivo/Adecuado/Pobre] - Calidad de diseño primero-móvil
+- **Rendimiento de Carga**: [Rápido/Adecuado/Lento] - Tiempos de carga de página y responsividad
+- **Calidad de Diseño Visual**: [Moderno/Estándar/Desactualizado] - Diseño UI y consistencia
+
+### **Puntaje de Cobertura de Funcionalidad**
+- **Cobertura de Elementos**: [X/Y] elementos analizados ([%] completo) - DEBE SER 100%
+- **Cobertura de Páginas**: [X/Y] páginas exploradas ([%] completo) - DEBE SER 100%
+- **Cobertura de Características**: [X/Y] características probadas ([%] completo) - DEBE SER 100%
+- **Características Centrales Accesibles**: [X/Y] características disponibles a través de UI ([%] completo)
+- **Completitud de Flujo de Usuario**: [Fluido/Adecuado/Roto] - Finalización de tarea extremo a extremo
+- **Calidad de Manejo de Errores**: [Excelente/Básico/Pobre] - Prevención y recuperación de errores
+- **Ayuda/Documentación**: [Comprensivo/Básico/Faltante] - Calidad de guía de usuario
+
+### **Implementación Técnica Web**
+- **Arquitectura Frontend**: [Moderno/Estándar/Legado] - Evaluación de stack tecnológico
+- **Calidad de Integración API**: [Excelente/Bueno/Pobre] - Comunicación frontend-backend
+- **Actualizaciones en Tiempo Real**: [Vivo/Periódico/Manual] - Mecanismo de actualización de contenido dinámico
+- **Cumplimiento de Accesibilidad**: [Cumple WCAG/Parcial/No-cumple] - Características de accesibilidad
+
+### **Evaluación de Preparación de Mercado**
+- **Usabilidad Pequeña Empresa**: [Intuitivo/Aprendible/Complejo] - Facilidad de uso para usuarios no técnicos
+- **Descubribilidad de Características**: [Obvio/Descubrible/Oculto] - Qué tan fácilmente los usuarios encuentran características
+- **Eficiencia de Finalización de Tarea**: [X] pasos promedio para acciones centrales
+- **Calidad de Onboarding de Usuario**: [Guiado/Auto-servicio/Ausente] - Nueva experiencia de usuario
+```
+
+### **Plantilla de Documentación de Comparación de Características**
+
+```markdown
+## Análisis de Implementación Web
+
+| Característica | Calidad UI | UX Móvil | Eficiencia | Impacto Usuario |
+|----------------|------------|----------|------------|-----------------|
+| [Característica Central 1] | ✅ Excelente | ✅ Optimizado | 3 pasos | Crítico |
+| [Característica Central 2] | 🟡 Adecuado | 🟡 Responsivo | 5 pasos | Alto |
+| [Característica Central 3] | ❌ Pobre | ❌ Roto | 8+ pasos | Medio |
+
+**Fortalezas UX**:
+- [Ventajas específicas de experiencia de usuario con ejemplos]
+- [Flujos de trabajo eficientes con recuentos de pasos]
+- [Destacados de optimización móvil]
+
+**Debilidades UX**:
+- [Puntos de fricción de usuario con ejemplos específicos]
+- [Problemas de usabilidad móvil]
+- [Barreras de finalización de tarea]
+
+**Oportunidades de Optimización**:
+- [Recomendaciones específicas para reducir pasos]
+- [Mejoras de experiencia móvil]
+- [Sugerencias de simplificación de flujo de usuario]
+```
+
+## Estándares de Documentación de Calidad
+
+### **Requisitos de Referencia Cruzada**
+- **Consistencia interna**: Asegurar que los hallazgos se alineen a través de todos los archivos de documentación
+- **Afirmaciones basadas en evidencia**: Referenciar capturas de pantalla y elementos UI específicos
+- **Insights cuantificados**: Incluir tiempos de carga, recuentos de clicks, números de pasos donde sea posible
+- **Suposiciones claras**: Distinguir comportamiento observado de inferencias
+
+### **Verificación de Completitud**
+
+**Lista de Verificación de Completitud de Documentación**:
+- [ ] **Todas las páginas analizadas documentadas** en análisis página por página
+- [ ] **Todos los flujos de usuario mapeados** con secuencias de pasos completas
+- [ ] **Todos los elementos interactivos catalogados** con métodos de interacción
+- [ ] **Todas las capturas de pantalla organizadas** y debidamente anotadas
+- [ ] **Todas las observaciones técnicas** soportadas por evidencia de interfaz
+- [ ] **Todos los hallazgos de accesibilidad** documentados con ejemplos específicos
+- [ ] **Porcentajes de cobertura calculados** y verificados
+- [ ] **Referencias cruzadas establecidas** entre hallazgos relacionados
+
+### **Estándares de Entregables Profesionales**
+
+**Requisitos de Calidad de Documentación**:
+- **Resumen Ejecutivo**: Hallazgos de alto nivel accesibles para partes interesadas no técnicas
+- **Detalle Técnico**: Profundidad suficiente para implementación del equipo de desarrollo
+- **Evidencia Visual**: Capturas de pantalla soportando cada hallazgo mayor
+- **Insights Accionables**: Recomendaciones claras con niveles de prioridad
+- **Contexto Comparativo**: Métricas permitiendo comparación de productos
+- **Guía de Implementación**: Sugerencias específicas para mejora
+
+## Integración con Reglas de Análisis
+
+### **Uso Complementario con Análisis Web**
+Esta regla de documentación trabaja en conjunto con:
+- **`analyze_web.mdc`**: Provee metodología de análisis, esta regla maneja la documentación
+- **Reglas específicas del producto**: Integración de contexto para documentación enfocada
+- **`analyze_comparative_products.mdc`**: Métricas estandarizadas para comparación entre productos
+
+### **Flujo de Documentación**
+1. **Fase de Análisis**: Usar `analyze_web.mdc` para exploración sistemática de interfaz
+2. **Fase de Documentación**: Aplicar esta regla para organización integral de resultados
+3. **Fase de Integración**: Referencia cruzada con análisis de código o reglas de producto
+4. **Fase de Comparación**: Usar métricas estandarizadas para análisis competitivo
+
+---
+
+**Esta regla de documentación asegura que los resultados de análisis web sean sistemáticamente organizados, profesionalmente presentados, y optimizados tanto para implementación técnica como para toma de decisiones estratégica.**

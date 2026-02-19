@@ -1,0 +1,169 @@
+---
+alwaysApply: true
+---
+
+# MOTION RULES — LINDA — INQUEBRANTABLES
+
+Documento fuente: [Motion rules Linda_V1.0.md](mdc:Motion rules Linda_V1.0.md)
+
+Estas reglas definen cómo se comporta el motion dentro de la experiencia de LINDA.
+Son OBLIGATORIAS y NO SE MODIFICAN. Cursor debe seguir esta estructura y reglas EXACTAMENTE.
+
+---
+
+## PRINCIPIO FUNDAMENTAL
+Las animaciones son EXCLUSIVAS del producto Linda.
+NUNCA se usan en acciones genéricas del sistema.
+NUNCA se modifica la animación base.
+
+---
+
+## ESTRUCTURA BASE DE CADA ANIMACIÓN
+
+Toda animación DEBE documentarse con estos 10 puntos exactos:
+1. Nombre de la animación
+2. Momento de la experiencia
+3. Componentes compatibles
+4. Interacción
+5. Tipo
+6. Dirección
+7. Colores
+8. Propiedades de animación
+9. Keyframes
+10. Reglas de uso
+
+---
+
+## MOMENTOS NARRATIVOS DE LINDA
+
+Los momentos narrativos definen CUÁNDO Linda existe en la interfaz.
+Solo aplican cuando hay una acción de IA o una manifestación sutil de Linda.
+
+Cada animación pertenece a UN SOLO momento narrativo.
+PROHIBIDO cruzar momentos.
+
+### 1. Acción
+Inicio de una acción de IA activada por el usuario.
+
+### 2. Proceso o carga
+IA en ejecución, el resultado aún no está disponible.
+
+### 3. Resultado
+La IA finaliza y entrega un output visible.
+
+### 4. Sugerencia o manifestación proactiva
+Linda propone acciones, insights o da información de forma proactiva.
+Linda tiene manifestaciones sutiles en momentos determinados o cuando el usuario interactúa.
+
+### Qué comunican estas animaciones
+- Que el usuario está interactuando con el componente de sugerencia
+- Que se está iniciando una capacidad de IA
+- Que la acción NO es genérica del sistema, sino PROPIA de Linda
+
+---
+
+## CATÁLOGO DE ANIMACIONES
+
+### ANIMACIÓN 1: HOVER — Gradient Motion
+
+| Propiedad | Valor |
+|---|---|
+| **Momento** | Acción |
+| **Componentes** | Button (Light, Fill, Flat) |
+| **Interacción** | Hover (pasar el cursor sobre el componente) |
+| **Tipo** | linear-gradient |
+| **Dirección** | 90deg (izquierda a derecha) |
+| **Colores** | opción 1 en 0%, opción 2 en 50%, opción 1 en 100% |
+| **Background size** | 200% 100% |
+| **Nombre** | gradient-shift |
+| **Duración** | 3s |
+| **Timing function** | linear |
+| **Iteraciones** | infinite |
+
+---
+
+### ANIMACIÓN 2: CLICK — Gradient Motion (Fast)
+
+| Propiedad | Valor |
+|---|---|
+| **Momento** | Acción |
+| **Componentes** | Button (Light, Fill) |
+| **Interacción** | Click / Active |
+| **Tipo** | linear-gradient |
+| **Dirección** | 90deg (izquierda a derecha) |
+| **Colores** | opción 1 en 0%, opción 2 en 50%, opción 1 en 100% |
+| **Background size** | 200% 100% |
+| **Nombre** | gradient-shift |
+| **Duración** | 0.6s |
+| **Timing function** | linear |
+| **Iteraciones** | infinite (solo durante el click) |
+| **Duración del estado** | 600ms antes de ejecutar la acción |
+
+---
+
+### ANIMACIÓN 3: HOVER / LOADING — border-line-reveal
+
+| Propiedad | Valor |
+|---|---|
+| **Momento** | Proceso o carga |
+| **Componentes** | Botones (fill, bordered) |
+| **Interacción** | Hover / Loading (cuando Linda procesa una consulta) |
+| **Tipo** | Scale reveal (transform: scale) + Animación secuencial con delays + Fade out (opacity) |
+| **Dirección horizontal** | Se expanden desde los extremos (izquierda/derecha según transform-origin) |
+| **Dirección vertical** | Se expanden desde arriba/abajo según transform-origin |
+| **Colores** | Fondo base: transparent · Líneas: white · Borde base: color 1 · Fondo hover: color 2 |
+| **Nombre** | border-line-reveal |
+| **Duración** | 1s |
+| **Timing function** | ease |
+| **Delay grupo 1** | 0.5s (líneas verticales) |
+| **Delay grupo 2** | 0.9s (líneas horizontales completas) |
+| **Estado inicial** | transform: scale(0), opacity: 1 |
+
+---
+
+### ANIMACIÓN 4: HOVER — border-slide-down
+
+| Propiedad | Valor |
+|---|---|
+| **Momento** | Sugerencia o manifestación proactiva |
+| **Componentes** | Cards (bordes de las cards) |
+| **Interacción** | Hover |
+| **Tipo** | Sliding Gradient |
+| **Dirección** | 180deg (vertical hacia abajo) |
+| **Colores** | opción 1 en 0%, opción 2 en 50%, opción 1 en 100% |
+| **Background size** | 200% 100% |
+| **Nombre** | border-slide-down |
+| **Duración** | 5s |
+| **Timing function** | linear |
+| **Iteraciones** | infinite (solo durante el hover) |
+| **Transición** | 300ms (fade in/out de opacity al entrar/salir del hover) |
+
+---
+
+### ANIMACIÓN 5: HOVER — cursor-spotlight
+
+| Propiedad | Valor |
+|---|---|
+| **Momento** | Sugerencia o manifestación proactiva |
+| **Componentes** | Cards |
+| **Interacción** | Hover |
+| **Tipo** | Gradiente radial interactivo que sigue el cursor |
+| **Dirección** | Radial omnidireccional (desde el centro hacia afuera) |
+| **Colores** | opción 1 en 0%, opción 2 en 50%, opción 1 en 100% |
+| **Tamaño del gradiente** | 200px de radio (circle) |
+| **Nombre** | cursor-spotlight |
+| **Duración** | 5s |
+| **Timing function** | ease (transition-opacity) |
+| **Iteraciones** | Continuo mientras el cursor se mueva dentro de la card |
+| **Transición** | 300ms (fade in al entrar hover, fade out al salir) |
+
+---
+
+## REGLAS DE USO — ABSOLUTAS
+
+1. Las animaciones SOLO se usan en relación a manifestaciones de Linda
+2. NUNCA se usan en acciones genéricas del sistema
+3. NUNCA se modifica la animación base definida aquí
+4. Cada animación pertenece a UN solo momento narrativo — sin excepciones
+5. Los componentes compatibles son los listados — no se extienden arbitrariamente
+6. Las duraciones, timing functions y delays son EXACTOS — no se aproximan

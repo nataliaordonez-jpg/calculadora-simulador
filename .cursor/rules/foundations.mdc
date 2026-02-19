@@ -1,0 +1,110 @@
+---
+alwaysApply: true
+---
+
+# FOUNDATIONS DEL PRODUCTO — INQUEBRANTABLES
+
+Documento fuente: [Foundations_v2.0.md](mdc:Foundations_v2.0.md)
+
+Estas foundations son la BASE ABSOLUTA del producto BeweOS. Definen las bases visuales, de interacción y de accesibilidad. TODA decisión de diseño y desarrollo DEBE alinearse con estos principios.
+
+---
+
+## INFORMACIÓN DEL SISTEMA
+- **Producto:** BeweOS1
+- **Responsables:** Producto & Diseño
+- **Estado:** Final — NO se modifica sin autorización
+
+---
+
+## 1. TIPOGRAFÍA (Jerarquía Visual)
+
+Diseñada para garantizar un *Time-to-value* inmediato y legibilidad máxima.
+
+### Fuentes OBLIGATORIAS
+- **Inter (Principal):** Títulos y cuerpo de texto. Transmite modernidad y limpieza.
+- **Merriweather (Secundaria):** EXCLUSIVA para resaltar textos o palabras generadas por la IA (LINDA). Aporta distinción humana y sofisticación.
+
+### Escala Tipográfica EXACTA
+- **H1** (32px / 2rem): Bold (700) → Títulos principales como "Dashboard"
+- **H2** (24px / 1.5rem): SemiBold (600) → Títulos de sección como "Resumen de Ventas"
+- **H3** (20px / 1.25rem): Medium (500) → Títulos de tarjetas
+- **Body** (16px / 1rem): Regular (400) → Texto general y párrafos
+- **Small** (14px / 0.875rem): Regular (400) → Metadatos y fechas
+- **Button** (14px): SemiBold (600) → Mayúscula inicial para acciones claras
+
+### Lineamientos OBLIGATORIOS
+- Mantener jerarquía clara SIEMPRE
+- Respetar diferencias entre desktop y mobile
+- NUNCA modificar tamaño/peso fuera de los casos definidos
+
+---
+
+## 2. SISTEMA DE COLOR COMPLETO
+
+### 2.1 Colores de Acción
+- **Primary (Blue Tech - #60A5FA):** Color DOMINANTE para acciones clave y elementos protagonistas
+  - Escala: 100 (#DFEDFE) → 700 (#355B8A)
+- **Secondary (Green Growth - #34D399):** Acciones secundarias y componentes activos no críticos
+  - Escala: 100 (#D6F6EB) → 700 (#1D7454)
+
+### 2.2 Estructura y Superficie
+- **Base Oscura (#0A2540):** Fondos profundos y secciones "dark" para transmitir autoridad
+- **Superficie Profunda (#355452):** Contenedores y bloques secundarios
+- **Teal Neutro (#75C9C8):** Divisores suaves y elementos de apoyo
+- **Accent Énfasis (#FAD19E):** Uso LIMITADO para badges e indicadores sutiles de IA
+
+### 2.3 Fondos Suaves
+- **Cian Claro (#67E8F9)** y **Aqua Suave (#CCFBF1):** Para dar "aire" y respiración visual — principio de simplicidad
+
+### 2.4 Paleta Completa — Uso según reglas de minimalismo con propósito, vanguardia visible y funcionalidad elegante
+- `#FAD19E` (Accent AI): Badges de scoring de potencialidad
+- `#60A5FA` (Primary Tech Blue): Botones de acción principal y control humano
+- `#67E8F9` (Cian de Navegación): Fondos destacados y áreas de navegación activas
+- `#CCFBF1` (Aqua Suave): Fondo general de plataforma y contenedores amplios
+- `#75C9C8` (Teal Neutro): Elementos de apoyo, divisores, estados inactivos/neutros
+- `#34D399` (Secondary Growth Green): Indicadores de éxito, clientes activos, automatizaciones completadas
+- `#FEF3C7` (Contexto AI): Fondo EXCLUSIVO para propuestas proactivas de LINDA
+- `#355452` (Superficie Profunda): Tarjetas oscuras y bloques de datos secundarios
+- `#0A2540` (Base Oscura): Tipografía principal, encabezados y menús de alta jerarquía
+
+### 2.5 Paleta Semántica (Feedback)
+- **Success = #4ADE80:** Verde vibrante para confirmaciones — éxito inmediato
+- **Error = #F87171:** Rojo coral intenso — fallos críticos, moderno y no alarmista
+- **Warning = #FBBF24:** Ámbar sólido — distinto de sugerencias de LINDA (#FEF3C7), requiere atención
+- **Info = #38BDF8:** Azul cielo brillante — diferente del Primary (#60A5FA), para guías y consejos
+
+### Contraste: Respetar WCAG mínimo recomendado SIEMPRE.
+
+---
+
+## 3. ICONOGRAFÍA (Solar Icon Set) — OBLIGATORIO
+
+### Estilos permitidos
+- **Principal:** Outline (Lineal) → mantiene el minimalismo
+- **Alternativa:** Bold Duotone → SOLO en estados destacados
+
+### Especificaciones técnicas
+- Stroke: 1.5px
+- Corner Radius: Rounded
+- Grid: 24×24px
+- Colores: #64748B (Inactivo) / #131313 (Activo)
+
+### ESTILOS PROHIBIDOS (The Banned List)
+- **PROHIBIDO: "Broken" Style** → Líneas interrumpidas generan ruido visual y parecen errores de carga. BeweOS debe transmitir ESTABILIDAD ABSOLUTA.
+- **PROHIBIDO: Bold (Sólido)** → Demasiado pesado y agresivo. Resta aire a la interfaz.
+- **PROHIBIDO: Mezclar variantes** de la librería.
+
+---
+
+## 4. TONO DE VOZ Y CONTENIDO
+
+### Personalidad de la marca
+- **ES:** Inteligente, Proactiva, Concisa, Alentadora
+- **NO ES:** Robótica, Verbosa, Regañona, Pasiva
+- **Mantra:** "No me digas qué hacer, sugiéreme qué es lo mejor"
+
+### Guía de Copy — OBLIGATORIA
+- **Botones:** Verbos de acción precisos ("Guardar", "Enviar", "Analizar"). PROHIBIDO genéricos como "OK" o "Hacer".
+- **Errores:** NUNCA culpar al usuario. SIEMPRE ofrecer solución. Ejemplo correcto: "No pudimos guardar. Intenta de nuevo".
+- **Empty states:** Celebrar brevemente. Ejemplo correcto: "¡Campaña enviada con éxito!" en lugar de "El proceso de envío de campaña ha finalizado".

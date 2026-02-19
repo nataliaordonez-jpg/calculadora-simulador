@@ -1,0 +1,863 @@
+---
+alwaysApply: false
+triggerPatterns: [
+  "Crear el front a partir del análisis de producto realizado"
+]
+---
+
+# Cursor Rules - Sistema de Desarrollo Rápido AuraUI/HeroUI (Completo)
+## ❓ Pregunta Obligatoria de Inicio
+
+**ANTES de cualquier desarrollo**, el agente DEBE preguntar:
+
+> **"¿Qué directorio de análisis debo usar como referencia para construir el producto?"**  
+> *(Ejemplo: `/Analisis/Fresha_Agendamientos/2025-01-28/`)*
+
+### Archivos de Referencia Obligatorios
+
+Una vez indicado el directorio, **VALIDAR y USAR** estos archivos específicos:
+
+```
+[Directorio_Análisis]/
+├── 01_Executive_Summary_TEXT.md           # 🔥 CRÍTICO - Blueprint técnico
+├── 04_Web_Analysis/
+│   └── User_Flows_By_Page_TEXT.md         # 🔥 CRÍTICO - Specs técnicas 
+└── 05_Visual_Documentation_MERMAID.md     # 📋 ÚTIL - Referencia visual
+```
+
+**Si CUALQUIERA de los archivos críticos (🔥) NO existe**:
+- ❌ **NO proceder con el desarrollo**
+- ✅ **Informar al usuario** qué archivos faltan
+- ✅ **Solicitar análisis completo** antes de continuar
+
+## 🎯 Objetivo Principal
+**CREAR TODO EL FLUJO DE USUARIO COMPLETO** según documentado en el análisis de producto. El desarrollo NO termina hasta que TODAS las funcionalidades identificadas estén implementadas completamente. Sistema iterativo página por página con control total sobre diseño, funcionalidad y user flow. Los layouts se basan en análisis de producto y opcionalmente Figma via MCP Framelink.
+
+## 📍 Ubicación y Estructura de Proyecto
+
+Las nuevas páginas deben ir en el directorio `/beweosagency/src/[modulo]/[pagina]/[Pagina].tsx`
+No añadas nunca nada al directorio de auraui, solo crea en el de beweosagency.
+
+### Estructura General del Proyecto
+```
+/beweosagency/                       # Proyecto principal (directorio raíz)
+├── src/
+│   ├── [modulo]/                    # ✅ AQUÍ CREAMOS NUEVAS PÁGINAS
+│   │   ├── application/             # Casos de uso
+│   │   ├── domain/                  # Entidades e interfaces
+│   │   ├── infrastructure/          # Adaptadores externos
+│   │   └── ui/
+│   │       ├── components/          # Componentes específicos del módulo
+│   │       └── pages/
+│   │           ├── [Pagina].tsx
+│   │           └── index.ts
+│   ├── shared/                      # ✅ Componentes compartidos del proyecto
+│   │   └── ui/
+│   │       ├── components/           # Icon, SuccessModal, ThemePicker, etc.
+│   │       ├── contexts/            # Contextos React compartidos
+│   │       └── hooks/               # Hooks personalizados
+│   ├── layout/                      # Sistema de navegación y layout
+│   └── locales/                     # Traducciones i18n
+├── package.json
+└── tsconfig.json                    # ✅ Configuración de alias
+```
+
+### Ubicación de Nuevas Páginas
+**TODAS las páginas nuevas se crean en:**
+`/beweosagency/src/[modulo]/ui/pages/[Pagina].tsx`
+
+**Siguiendo arquitectura hexagonal:**
+- Casos de uso: `/beweosagency/src/[modulo]/application/`
+- Entidades: `/beweosagency/src/[modulo]/domain/interfaces/`
+- Adaptadores: `/beweosagency/src/[modulo]/infrastructure/adapters/`
+- UI: `/beweosagency/src/[modulo]/ui/pages/`
+
+**NO crear en:** `/src/pages/`, `/src/components/`, `/src/[modulo]/` (fuera de beweosagency) u otras ubicaciones
+
+## 📋 Configuración del Menú de Navegación
+
+### Estructura del Sistema de Menú
+El menú de navegación se configura automáticamente a través de datos mock que se mapean a componentes. Para añadir nuevas secciones al menú:
+
+#### 1. Añadir Traducciones del Menú
+```json
+// src/locales/es/menu.json
+{
+  "menu_nueva_seccion": "Nueva Sección"
+}
+
+// src/locales/en/menu.json  
+{
+  "menu_nueva_seccion": "New Section"
+}
+```
+
+#### 2. Configurar Mapeo de Rutas
+```typescript
+// src/layout/infrastructure/mappers/menu-groups.mapper.ts
+const moduleRedirects: Record<string, string> = {
+  dashboard: "/dashboard",
+  agenda: "/agenda",          // ✅ Ejemplo de nueva ruta
+  "nueva-seccion": "/nueva-seccion",
+  // ... otras rutas
+};
+```
+
+#### 3. Añadir Datos Mock del Módulo
+```typescript
+// src/layout/infrastructure/mocks/initial-data-response.mock.ts
+group: [{
+  name: "Overview",
+  modules: [
+    {
+      id: "nueva-seccion",
+      name: "Nueva Sección", 
+      icon: "solar:icon-outline",  // Icono de Iconify
+      type: "module",
+      order: 1,
+      labels: [],
+      enabled: true,
+      resources: [],
+    }
+  ]
+}]
+```
+
+#### 4. Configurar Ruta en App.tsx
+```typescript
+// src/App.tsx
+<Routes>
+  <Route path="/nueva-seccion" element={<NuevSeccionPage />} />
+</Routes>
+```
+
+### Iconos Disponibles
+Los iconos utilizan la librería **@solar-icons/react**:
+- Importar directamente desde `@solar-icons/react`
+- Usar componentes React nativos
+- Tamaños configurables mediante props
+
+**Ejemplo**: 
+```typescript
+import { Calendar, Users, Box } from '@solar-icons/react';
+
+<Calendar size={24} />
+<Users size={20} />
+<Box size={16} />
+```
+
+### Orden de Elementos del Menú
+Los elementos se ordenan automáticamente por la propiedad `order` (0, 1, 2, 3...). El Dashboard siempre debe ser orden 0.
+
+## 🏗️ Arquitectura Hexagonal (OBLIGATORIA)
+
+### Estructura de Capas para Nuevos Módulos
+```
+/beweosagency/src/[nuevo-modulo]/
+├── application/              # 🎯 Casos de uso
+│   ├── [feature].usecase.ts
+│   └── [feature-2].usecase.ts
+├── domain/                   # 🏛️ Núcleo del negocio
+│   ├── interfaces/
+│   │   └── [entity].interface.ts
+│   └── ports/
+│       └── [repository].port.ts
+├── infrastructure/           # 🔌 Adaptadores externos
+│   ├── adapters/
+│   │   └── [repository].adapter.ts
+│   └── mocks/
+│       └── [entity].mock.ts
+└── ui/                      # 🎨 Adaptadores UI
+    ├── components/
+    └── pages/
+        └── [Page].tsx
+```
+
+### Reglas de Dependencia
+```typescript
+// ✅ CORRECTO - Flujo de dependencias
+domain ← application ← infrastructure
+                    ← ui
+
+// ❌ INCORRECTO - Dependencias invertidas
+domain → infrastructure  // NUNCA
+```
+
+## 🧠 Comportamiento del Agente
+
+### 0. Análisis Previo OBLIGATORIO (PRIMER PASO)
+
+**ESTAS REGLAS SE ACTIVAN AUTOMÁTICAMENTE** cuando el usuario menciona términos de desarrollo frontend (ver sección "Activación Automática").
+
+**ANTES de cualquier desarrollo**, el usuario DEBE indicar el **directorio de análisis** de producto que servirá como base para la construcción del frontend.
+
+#### Proceso de Análisis Previo:
+
+1. **SOLICITAR DIRECTORIO**: Usar la pregunta obligatoria de inicio mencionada anteriormente
+
+2. **VALIDAR ARCHIVOS CRÍTICOS**: Verificar que existen estos archivos específicos:
+   - `01_Executive_Summary_TEXT.md` 🔥 **CRÍTICO** - Blueprint técnico
+   - `04_Web_Analysis/User_Flows_By_Page_TEXT.md` 🔥 **CRÍTICO** - Specs técnicas
+   - `05_Visual_Documentation_MERMAID.md` 📋 **ÚTIL** - Referencia visual
+
+3. **ANALIZAR DOCUMENTOS**: LEER OBLIGATORIAMENTE en este orden específico:
+   - **PRIMERO**: `01_Executive_Summary_TEXT.md` - Roadmap y prioridades técnicas
+   - **SEGUNDO**: `04_Web_Analysis/User_Flows_By_Page_TEXT.md` - Especificaciones detalladas de funcionalidad
+   - **TERCERO**: `05_Visual_Documentation_MERMAID.md` - Diagramas de referencia arquitectural
+
+4. **EXTRAER INFORMACIÓN CRÍTICA** para el desarrollo frontend:
+
+   #### **🗺️ Roadmap de Desarrollo**
+   - **Prioridades identificadas** en Executive Summary
+   - **Funcionalidades críticas** de User_Flows_By_Page_TEXT.md
+   - **Secuencia de implementación** basada en flujos de usuario documentados
+   - **Dependencias entre componentes** del análisis visual
+
+   #### **🎯 Decisiones de Producto**
+   - **Requerimientos de negocio** del Executive Summary
+   - **Patrones UX identificados** en User_Flows_By_Page_TEXT.md
+   - **Limitaciones técnicas** documentadas en el análisis
+   - **Criterios de éxito** establecidos en Executive Summary
+
+   #### **🔄 Workflows Específicos**
+   - **Flujos de usuario principales** de User_Flows_By_Page_TEXT.md
+   - **Estados de aplicación** identificados en diagramas Mermaid
+   - **Interacciones críticas** documentadas por página
+   - **Manejo de errores** requerido según análisis
+
+5. **GENERAR PLAN DE DESARROLLO** basado en el análisis:
+   - **Módulos a crear** (basados en funcionalidades principales)
+   - **Páginas prioritarias** (según flujos críticos identificados)
+   - **Componentes necesarios** (según patrones UX del análisis)
+   - **Integraciones requeridas** (según dependencias documentadas)
+
+6. **CREAR DOCUMENTO AUXILIAR DE SEGUIMIENTO** (`AUX_[Producto]_Guia_Desarrollo_TEXT.md`):
+   - **Lista TODOS los flujos** identificados en el análisis con estado: "No Desarrollado" | "En Desarrollo" | "Desarrollado"
+   - **Dependencias entre flujos** y orden recomendado de implementación
+   - **Checklist de funcionalidades** con referencias a páginas del análisis
+   - **ACTUALIZAR OBLIGATORIAMENTE** al completar cada flujo/funcionalidad
+   - **Próximos pasos claros** para continuar desarrollo interrumpido
+
+#### **Criterios de Desarrollo Basados en Análisis**:
+
+- **✅ Fidelidad al Análisis**: Cada componente desarrollado debe corresponder a funcionalidades identificadas en el análisis
+- **✅ Priorización Informada**: Seguir el orden de prioridades establecido en Executive Summary
+- **✅ UX Patterns Documentados**: Implementar patrones UX específicos identificados en Web Analysis
+- **✅ Business Logic Alignment**: Asegurar que la lógica de negocio refleje los workflows documentados
+- **✅ Error Handling Consistency**: Implementar manejo de errores según problemas identificados en el análisis
+- **✅ Desarrollo Completo Obligatorio**: NO terminar hasta implementar TODOS los flujos identificados
+- **✅ Seguimiento Continuo**: Actualizar documento auxiliar en cada cambio de estado de desarrollo
+
+### 1. Proceso de Desarrollo Iterativo (DESPUÉS del análisis previo)
+
+1. **ENTENDER**: Analizar qué página específica quiere construir el usuario **basándose en las prioridades del análisis**
+2. **PLANTEAR**: Describir la solución para ESA página en términos de UI/UX **siguiendo patrones identificados en el análisis**
+3. **LEER**:
+   - **CRÍTICO**: Referenciar constantemente los documentos de análisis para decisiones de diseño
+   - Revisar `/beweosagency/src/settings` para tokens de diseño
+   - Consultar ejemplos de uso de AuraUI en páginas existentes como `/beweosagency/src/negocios/ui/pages/Negocios.tsx`
+   - Verificar componentes shared disponibles en `/beweosagency/src/shared/ui/components/`
+   - Verificar estructura existente del módulo
+
+4. **CONFIGURAR NAVEGACIÓN** (OBLIGATORIO para nuevos módulos):
+   - Antes de crear cualquier página de un módulo nuevo, SIEMPRE añadir primero la entrada en el menú de navegación (Menu)
+   - Si se está creando un módulo con submódulos, ponlo como un subitem en el Menu y no lo diseñes en el módulo/pages. Los subsubmódulos se generarán con la componente de tabs.
+   - Verificar que la ruta esté correctamente configurada
+   - Confirmar que el módulo es accesible desde la navegación principal
+   - **Sin acceso por menú = Sin desarrollo de páginas**
+
+5. **DESARROLLAR**: Crear SOLO la página actual siguiendo arquitectura hexagonal
+6. **ACTUALIZAR SEGUIMIENTO**: Modificar `AUX_[Producto]_Guia_Desarrollo_TEXT.md` marcando flujo como "Desarrollado"
+7. **VISUALIZAR**: Mostrar al usuario cómo ver la página
+8. **VALIDAR**: Esperar confirmación antes de continuar con la siguiente página
+9. **VERIFICAR COMPLETITUD**: Revisar documento auxiliar - si quedan flujos "No Desarrollado" continuar desarrollo obligatoriamente
+
+### 2. Documento Auxiliar de Seguimiento (OBLIGATORIO)
+
+**Archivo**: `AUX_[Producto]_Guia_Desarrollo_TEXT.md` (ej: `AUX_Fresha_Agendamientos_Guia_Desarrollo_TEXT.md`)
+
+**Estructura Obligatoria**:
+```markdown
+# Guía de Desarrollo - [Producto]
+
+## Estado General
+- **Análisis Base**: [Directorio del análisis]
+- **Inicio Desarrollo**: [Fecha]
+- **Última Actualización**: [Fecha]
+- **Progreso Global**: [X/Y flujos completados] ([%])
+
+## Flujos de Usuario Identificados
+### 🔴 No Desarrollado
+- [ ] **[Flujo 1]** - [Descripción] (Ref: [página análisis])
+- [ ] **[Flujo 2]** - [Descripción] (Ref: [página análisis])
+
+### 🟡 En Desarrollo  
+- [ ] **[Flujo X]** - [Descripción] - Estado: [detalle] (Ref: [página análisis])
+
+### 🟢 Desarrollado
+- [x] **[Flujo Y]** - [Descripción] - Completado: [fecha] (Ref: [página análisis])
+
+## Próximos Pasos
+1. **Siguiente flujo prioritario**: [Nombre flujo]
+2. **Dependencias**: [Lista dependencias si las hay]
+3. **Páginas a crear**: [Lista páginas específicas]
+4. **Componentes necesarios**: [Lista componentes específicos]
+```
+
+**Reglas de Actualización**:
+- **ACTUALIZAR SIEMPRE** al cambiar estado de cualquier flujo
+- **Mantener referencia** a páginas específicas del análisis
+- **Incluir fecha** de cada cambio de estado
+- **Detallar próximos pasos** para continuidad
+
+### 3. Desarrollo Página por Página
+
+**Proceso de Creación de Página:**
+
+1. **Crear estructura del módulo** (si no existe):
+```
+/beweosagency/src/[modulo]/
+├── application/
+├── domain/
+├── infrastructure/
+└── ui/
+```
+
+2. **Crear interfaces de dominio**:
+```typescript
+// domain/interfaces/[entity].interface.ts
+export interface I[Entity] {
+  id: string;
+  // propiedades del dominio
+}
+```
+
+3. **Crear puertos**:
+```typescript
+// domain/ports/[repository].port.ts
+export interface I[Entity]Repository {
+  get[Entity](id: string): Promise<I[Entity] | null>;
+  // otros métodos
+}
+```
+
+4. **Crear casos de uso**:
+```typescript
+// application/[action]-[entity].usecase.ts
+export class [Action][Entity]UseCase {
+  constructor(private readonly repository: I[Entity]Repository) {}
+  
+  async execute(params: any): Promise<any> {
+    // lógica de aplicación
+  }
+}
+```
+
+5. **Crear adaptadores**:
+```typescript
+// infrastructure/adapters/[repository].adapter.ts
+export class [Entity]RepositoryAdapter implements I[Entity]Repository {
+  // implementación real
+}
+```
+
+6. **Crear página con inyección de dependencias**:
+```typescript
+// ui/pages/[Page].tsx
+import React, { useState, useEffect } from 'react';
+import { [UseCase] } from '../../application/[usecase]';
+import { [Repository]Adapter } from '../../infrastructure/adapters/[adapter]';
+
+const [Page]: React.FC = () => {
+  const [repository] = useState(() => new [Repository]Adapter());
+  const [useCase] = useState(() => new [UseCase](repository));
+  
+  // componente React
+};
+```
+
+7. **Crear index.ts**: Para exportar la página
+8. **Actualizar enrutamiento**: Añadir la nueva ruta
+9. **Probar visualización**: Verificar que funciona
+
+### Implementación en Páginas
+```typescript
+// En tu página - ui/pages/[Page].tsx
+import type { [Page]Translations } from '../domain/interfaces/[page]-translations.interface';
+
+// Traducciones por defecto
+const defaultTranslations: [Page]Translations = {
+  title: "Título de la página",
+  description: "Descripción",
+  buttons: {
+    save: "Guardar",
+    cancel: "Cancelar"
+  }
+};
+
+export interface [Page]Props {
+  translations?: Partial<[Page]Translations>;
+}
+
+export const [Page]: React.FC<[Page]Props> = ({ translations = {} }) => {
+  const t = { ...defaultTranslations, ...translations };
+  
+  return (
+    <div>
+      <h1>{t.title}</h1>
+      <Button translations={{ label: t.buttons.save }} />
+    </div>
+  );
+};
+```
+
+## 📂 Convenciones de Nomenclatura
+
+### Estructura de Archivos
+- **Módulos**: kebab-case (auth, user-management, ecommerce)
+- **Carpetas de página**: kebab-case (login, product-detail)
+- **Archivos de componente**: PascalCase (Login.tsx, ProductDetail.tsx)
+- **Casos de uso**: kebab-case con sufijo (get-user.usecase.ts)
+- **Interfaces**: PascalCase con prefijo I (IUser, IUserRepository)
+- **Adaptadores**: PascalCase con sufijo Adapter (UserRepositoryAdapter)
+
+### Variables y Funciones
+- **Variables**: camelCase (userName, isLoading)
+- **Funciones**: camelCase (handleClick, formatUserName)
+- **Constantes**: SCREAMING_SNAKE_CASE (MAX_RETRY_ATTEMPTS)
+- **Hooks**: camelCase con prefijo use (useAuth, useUserService)
+
+### Alias de TypeScript Configurados
+**USAR ESTOS ALIAS (configurados en `tsconfig.json`):**
+```typescript
+// ✅ Alias disponibles:
+"@shared/*"     → "src/shared/*"     // Componentes, hooks, contextos compartidos
+"@settings/*"   → "src/settings/*"   // Módulo de configuración
+"@dashboard/*"  → "src/dashboard/*"  // Módulo de dashboard
+
+// ✅ Ejemplos de uso:
+import { Icon } from "@shared/ui/components";
+import { useSession } from "@shared/ui/contexts/session-context/session-context";
+import type { EnumTheme } from "@shared/domain/enums/enum-theme.enum";
+```
+
+## 🎨 Uso OBLIGATORIO de Componentes - Jerarquía Unificada
+
+### 📦 Jerarquía de Componentes (ORDEN DE PRIORIDAD OBLIGATORIO)
+
+**🥇 PRIORIDAD 1: Componentes Custom del Proyecto - `/beweosagency/src/shared/ui/components/`:**
+- Button, Card, Input, Select, Icon, SuccessModal, ThemePicker, UploadFileComponent
+- **Son wrappers personalizados que SIEMPRE tienen precedencia**
+- **Importar con alias:** `"@shared/ui/components"`
+- **REGLA**: Si existe versión custom, NUNCA usar AuraUI/HeroUI equivalente
+
+**🥈 PRIORIDAD 2: Aurora UI (Librería Externa) - `@beweco/aurora-ui`:**
+- Table, Modal, Avatar, Chip, Tabs, Radio, Pagination, etc.
+- **Usar SOLO cuando NO existe versión custom en Prioridad 1**
+- **Importar desde:** `"@beweco/aurora-ui"`
+
+**🥉 PRIORIDAD 3: HeroUI Directo - `@heroui/react`:**
+- Skeleton, Progress, Spinner, Tooltip (componentes no disponibles en Aurora UI)
+- **ÚLTIMO RECURSO: Solo cuando no existe en Prioridad 1 ni 2**
+- **Importar desde:** `"@heroui/react"`
+
+### ⚠️ REGLA CRÍTICA DE COMPONENTES
+**SOLO se pueden usar componentes de AuraUI o HeroUI. ESTÁ ESTRICTAMENTE PROHIBIDO:**
+- ❌ Crear componentes personalizados
+- ❌ Usar componentes nativos de HTML (div, button, input, etc.) directamente
+- ❌ Importar componentes de otras librerías UI
+- ❌ Modificar o extender componentes de AuraUI/HeroUI
+
+### 🔄 Flujo de Decisión de Componentes (OBLIGATORIO)
+
+**ANTES de importar cualquier componente, seguir este proceso:**
+
+```
+¿Necesito un componente?
+├── ¿Existe en @shared/ui/components? (PRIORIDAD 1)
+│   ├── SÍ → USAR versión custom ✅
+│   └── NO → Continuar
+├── ¿Existe en @beweco/aurora-ui? (PRIORIDAD 2)
+│   ├── SÍ → Usar Aurora UI ✅
+│   └── NO → Continuar
+└── ¿Existe en @heroui/react? (PRIORIDAD 3)
+    ├── SÍ → Usar HeroUI directo ✅
+    └── NO → ⚠️ CONTACTAR CON EQUIPO
+```
+
+### Importación y Uso Jerárquico
+
+```typescript
+// 🥇 PRIORIDAD 1 - Componentes Custom del Proyecto (SIEMPRE PRIMERO):
+import { 
+  Button,           // ✅ Wrapper personalizado sobre HeroUI Button
+  Card,            // ✅ Card personalizada sin sombra, padding específico
+  Input,           // ✅ Input personalizado con label externo  
+  Select,          // ✅ Select personalizado con reglas BeweOS
+  Icon,            // ✅ Wrapper para @solar-icons/react
+  SuccessModal,    // ✅ Modal personalizado para confirmaciones
+  ThemePicker,     // ✅ Selector temas específico BeweOS
+  UploadFileComponent // ✅ Uploader personalizado
+} from "@shared/ui/components";
+
+// 🥈 PRIORIDAD 2 - Aurora UI (SOLO si no existe custom):
+import { 
+  Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, // Tablas avanzadas
+  Modal, ModalContent, ModalBody, ModalHeader, ModalFooter,        // Modales complejos
+  Avatar, Chip, Badge,                                             // Elementos display
+  Tabs, Tab, Radio, RadioGroup, Checkbox, CheckboxGroup,          // Controles formulario
+  Pagination, Divider, Spacer                                     // Layout y navegación
+} from "@beweco/aurora-ui";
+
+// 🥉 PRIORIDAD 3 - HeroUI Directo (ÚLTIMO RECURSO):
+import { 
+  Skeleton,        // ✅ Solo si no está en Aurora UI
+  Progress,        // ✅ Solo si no está en Aurora UI  
+  Spinner,         // ✅ Solo si no está en Aurora UI
+  Tooltip          // ✅ Solo si no está en Aurora UI
+} from "@heroui/react";
+
+// ✅ OTROS IMPORTS VÁLIDOS:
+import { useSession } from "@shared/ui/contexts/session-context/session-context";
+import type { EnumTheme } from "@shared/domain/enums/enum-theme.enum";
+
+// ❌ PROHIBIDO - NUNCA hacer esto:
+// import { Button } from "@beweco/aurora-ui";     // ✅ Existe custom en @shared
+// import { Card } from "@heroui/react";           // ✅ Existe custom en @shared
+// <button>Click me</button>                       // ❌ NO usar HTML nativo
+// import { Button } from 'react-bootstrap'        // ❌ NO otras librerías
+```
+
+### Componentes Principales y Props
+
+#### Buttons
+```typescript
+<Button 
+  variant="solid"       // solid | bordered | light | flat | faded
+  size="md"            // sm | md | lg
+  radius="md"          
+  isLoading={false}
+  className="w-auto"   // IMPORTANTE: en cards usar w-auto
+  translations={{ label: "Mi Botón" }}
+>
+  Texto
+</Button>
+```
+
+#### Cards
+**Referencia**: Usar `/beweosagency/src/settings` como patrón para componentes, variantes y spacing.
+```typescript
+<Card
+  shadow="md"          // sm | md
+  radius="sm"
+  className="p-4"
+>
+  {/* Contenido - usar solo componentes AuraUI/HeroUI */}
+  {/* Seguir patrones de /beweosagency/src/settings */}
+  
+  {/* Botones de acción alineados a la derecha */}
+  <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-divider">
+    <Button size="sm" variant="light" className="w-auto">
+      Cancelar
+    </Button>
+    <Button size="sm" variant="solid" className="w-auto">
+      Guardar
+    </Button>
+  </div>
+</Card>
+```
+
+#### Tables
+```typescript
+<Table
+  shadow="md"
+  radius="lg"
+  isWrapped
+  aria-label="Tabla de datos"
+>
+  <TableHeader>
+    <TableColumn>Nombre</TableColumn>
+    <TableColumn>Email</TableColumn>
+    <TableColumn>Acciones</TableColumn>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>Juan</TableCell>
+      <TableCell>juan@email.com</TableCell>
+      <TableCell>
+        <Button isIconOnly size="sm" variant="light">
+          <Icon name="Edit" size={16} />
+        </Button>
+      </TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+```
+
+### Lista de Componentes Disponibles
+**SOLO USAR ESTOS COMPONENTES:**
+- **Layout**: Container, Grid, Spacer, Divider
+- **Display**: Card, Accordion, Avatar, Badge, Chip, Skeleton
+- **Forms**: Input, Textarea, Select, Checkbox, Radio, Switch, Slider
+- **Navigation**: Navbar, Breadcrumbs, Pagination, Tabs
+- **Feedback**: Modal, Popover, Tooltip, Progress, Spinner
+- **Data**: Table, TableHeader, TableBody, TableRow, TableCell, TableColumn
+
+## 💅 Estilos y Diseño
+
+### Principios de Diseño del Layout
+- ✅ **Diseño Minimalista Obligatorio**: Priorizar SIEMPRE un diseño minimalista que maximice la usabilidad y comodidad de uso
+- ✅ **Espaciado Generoso**: Usar espaciado adecuado entre elementos para mejorar la legibilidad
+- ✅ **Jerarquía Visual Clara**: Establecer una jerarquía visual evidente que guíe al usuario naturalmente
+- ✅ **Elementos Esenciales**: Mostrar solo elementos esenciales en pantalla, evitar sobrecarga visual
+- ✅ **Navegación Intuitiva**: El layout debe permitir una navegación fluida y comprensible
+- ✅ **CRÍTICO - Respeto al Layout Principal**: NUNCA tapar o interferir con el Header y Menú. Las páginas deben trabajar DENTRO del contenedor principal sin usar min-h-screen, position fixed/absolute que tape elementos de navegación, o backgrounds que interfieran con el layout
+
+
+### Tailwind CSS Obligatorio
+- ✅ Usar SOLO Tailwind CSS para estilos
+- ❌ NO usar styled-components, emotion, o CSS-in-JS
+- ✅ Incluir soporte para dark mode con prefijo dark:
+- ✅ Usar tokens del proyecto desde `/beweosagency/src/settings`
+
+### Breakpoints Responsivos
+- xs: 320px
+- sm: 640px
+- md: 744px
+- lg: 1024px
+- xl: 1280px
+- 2xl: 1536px
+
+### Grid Responsivo para Cards
+**Usar apartado de settings como referencia** para componentes, variantes, spacing y estilo.
+```typescript
+<div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+  {items.map(item => (
+    <Card key={item.id}>
+      {/* Contenido - SOLO componentes AuraUI/HeroUI */}
+      {/* Referencia: /beweosagency/src/settings para patrones */}
+    </Card>
+  ))}
+</div>
+```
+
+## 📋 Plantillas de Respuesta
+
+### Para Nueva Página con Arquitectura Hexagonal
+```markdown
+## 🎨 Página: [NombrePagina]
+
+### 📐 Análisis de Diseño
+Lo que quieres crear es: [descripción en términos UI/UX]
+
+**Tokens de diseño aplicados** (de /beweosagency/src/settings):
+#### Colores: Paleta de Colores
+primario: #3B82F6
+secundario: #60A5FA
+fondoClaro: #FFFFFF
+fondoOscuro: #1F2937
+textoPrincipal: #111827
+textoSecundario: #6B7280
+error: #EF4444
+éxito: #10B981
+advertencia: #F59E0B
+#### Espaciado:
+XS: 4 SM: 8 MD: 16 LG: 24 XL: 32 XXL: 40
+
+#### Grid y Layout
+Columnas: 12
+Gutters: 16px
+Max Width: 1280px
+
+#### Breakpoints:
+xs: 320 sm: 640 md: 744 lg: 1024 xl: 1280 2xl: 1536
+
+#### Contenedores por breakpoint:
+Incluyen padding, margin, gutter, y centrado.
+
+#### Tipografía
+| Nivel     | Tamaño | Peso | Line-height |
+| --------- | ------ | ---- | ----------- |
+| H2        | 30px   | 700  | 38px        |
+| H3        | 24px   | 600  | 32px        |
+| P         | 16px   | 400  | 24px        |
+| P pequeño | 14px   | 400  | 20px        |
+| Caption   | 12px   | 400  | 16px        |
+**SOLO usar H2 y H3 para headers**. Buenas prácticas: line-height ≥ 1.5, márgenes 12–24px.
+
+####Iconografía
+- Usar **@solar-icons/react** exclusivamente
+- Tamaños: 16, 20, 24, 32px mediante prop `size`
+- Importar componentes individuales
+- Alineación automática con text
+
+#### Animaciones
+- Duraciones:
+hover: 150ms, estado: 200–300ms, modal: 300ms, salida: 200ms, complejas: 400–600ms
+- Easing:
+standard: ease-in-out, entrada: ease-out, salida: ease-in, lineal: linear
+- Soporte: prefers-reduced-motion
+
+**Componentes a utilizar** (JERARQUÍA OBLIGATORIA):
+- **🥇 PRIORIDAD 1 - Custom del proyecto (@shared/ui/components)**: [Button, Card, Input, Select, Icon - VERIFICAR PRIMERO si existen versiones custom]
+- **🥈 PRIORIDAD 2 - Aurora UI (@beweco/aurora-ui)**: [Table, Modal, Tabs - SOLO si no existe custom]
+- **🥉 PRIORIDAD 3 - HeroUI directo (@heroui/react)**: [Skeleton, Progress - ÚLTIMO RECURSO]
+
+### 🏗️ Arquitectura Hexagonal
+
+**Estructura a crear**:
+/beweosagency/src/[modulo]/
+├── application/
+│   └── [caso-uso].usecase.ts
+├── domain/
+│   ├── interfaces/
+│   │   └── [entidad].interface.ts
+│   └── ports/
+│       └── [repositorio].port.ts
+├── infrastructure/
+│   ├── adapters/
+│   │   └── [repositorio].adapter.ts
+│   └── mocks/
+│       └── [entidad].mock.ts
+└── ui/
+    └── pages/
+        └── [Pagina].tsx
+
+### 🧩 Componentes a utilizar (ORDEN JERÁRQUICO OBLIGATORIO)
+
+**🥇 PRIORIDAD 1 - Custom del Proyecto (@shared/ui/components):**
+- `Button` personalizado con reglas BeweOS (SIEMPRE usar en lugar de AuraUI Button)
+- `Card` personalizada sin sombra, padding específico (SIEMPRE usar en lugar de AuraUI Card)  
+- `Input` personalizado con label externo (SIEMPRE usar en lugar de AuraUI Input)
+- `Select` personalizado con reglas BeweOS (SIEMPRE usar en lugar de AuraUI Select)
+- `Icon` wrapper para @solar-icons/react
+- `SuccessModal` para confirmaciones específicas BeweOS
+
+**🥈 PRIORIDAD 2 - Aurora UI (@beweco/aurora-ui) - SOLO si no existe custom:**
+- `Table, TableBody, TableCell` para mostrar datos (no hay versión custom)
+- `Modal, ModalContent` para modales complejos (no hay versión custom)
+- `Tabs, Tab` para navegación interna (no hay versión custom)
+- `Avatar, Chip, Badge` para elementos display (no hay versión custom)
+
+**🥉 PRIORIDAD 3 - HeroUI Directo (@heroui/react) - ÚLTIMO RECURSO:**
+- `Skeleton` para estados de carga (solo si no está en Aurora UI)
+- `Progress, Spinner` para indicadores de progreso (solo si no está en Aurora UI)
+
+### 📁 Archivos a Crear/Modificar
+
+[CÓDIGO DE TODOS LOS ARCHIVOS SIGUIENDO ARQUITECTURA HEXAGONAL]
+
+### 🚀 Para Visualizar
+
+1. Inicia el servidor:
+   npm run dev
+
+2. Visita: http://localhost:3000/[nueva-ruta]
+
+### ✅ ¿Qué opinas de esta página?
+¿Te gusta el diseño? ¿Quieres ajustar algo antes de continuar?
+```
+
+## 🧪 Testing
+
+### Estructura de Tests
+```
+/beweosagency/src/[modulo]/
+└── tests/
+    ├── application/
+    │   └── [usecase].test.ts
+    ├── infrastructure/
+    │   └── [adapter].test.ts
+    └── ui/
+        └── [Page].test.tsx
+```
+
+### Estrategia de Testing
+- **Casos de uso**: Test unitarios sin dependencias externas
+- **Adaptadores**: Tests con mocks
+- **UI**: Tests de componentes con React Testing Library
+
+## 🔧 Comandos de Desarrollo
+
+### Crear módulo completo con arquitectura hexagonal
+"Crea el módulo [nombre] con arquitectura hexagonal"
+
+**Acciones automáticas**:
+1. ✅ Crear estructura de carpetas (application, domain, infrastructure, ui)
+2. ✅ Crear interfaces de dominio base
+3. ✅ Crear puertos base
+4. ✅ Crear caso de uso ejemplo
+5. ✅ Crear adaptador ejemplo
+6. ✅ Crear página ejemplo con inyección de dependencias
+
+### Añadir nueva funcionalidad a módulo existente
+"Añade la funcionalidad [nombre] al módulo [modulo]"
+
+**Acciones automáticas**:
+1. ✅ Crear nueva interface si es necesaria
+2. ✅ Crear nuevo caso de uso
+3. ✅ Actualizar adaptador o crear nuevo
+4. ✅ Crear/actualizar página UI
+
+## ✅ Checklist de Desarrollo
+
+### Antes de Crear Página
+- [ ] Estructura hexagonal definida
+- [ ] Interfaces de dominio creadas
+- [ ] Casos de uso implementados
+- [ ] Adaptadores configurados
+- [ ] **Lista de componentes AuraUI/HeroUI identificados**
+
+### Durante el Desarrollo
+- [ ] **SEGUIR JERARQUÍA OBLIGATORIA: 1º @shared/ui/components → 2º @beweco/aurora-ui → 3º @heroui/react**
+- [ ] **VERIFICAR componentes custom ANTES de usar Aurora UI o HeroUI**  
+- [ ] **NO usar elementos HTML nativos (div, button, input, etc.)**
+- [ ] Verificar importaciones correctas con los alias configurados
+- [ ] Aplicar tokens de diseño del proyecto
+- [ ] Implementar inyección de dependencias siguiendo arquitectura hexagonal
+- [ ] Añadir traducciones por defecto con interfaces TypeScript
+- [ ] Seguir convenciones de nomenclatura
+
+### Después del Desarrollo
+- [ ] Actualizar enrutamiento
+- [ ] Verificar responsividad
+- [ ] Probar dark mode
+- [ ] **Verificar que NO hay componentes personalizados**
+- [ ] Validar con usuario
+- [ ] Documentar decisiones importantes
+
+## 🚨 Reglas Críticas
+
+### NUNCA hacer:
+- ❌ **Usar componentes HTML nativos (div, button, input, etc.)**
+- ❌ **Crear componentes personalizados**
+- ❌ **Importar componentes de otras librerías UI**
+- ❌ **Terminar desarrollo sin completar TODOS los flujos identificados**
+- ❌ **Omitir actualización del documento auxiliar de seguimiento**
+- ❌ Crear páginas fuera de `/beweosagency/src/[modulo]/`
+- ❌ Modificar componentes en `/src/components/` de AuraUI/HeroUI
+- ❌ Mezclar lógica de negocio en componentes UI
+- ❌ Importar infraestructura en dominio
+- ❌ Hacer ninguna acción con Git
+- ❌ Usar CSS personalizado o styled-components
+- ❌ Crear todas las páginas de un flujo sin validación
+- ❌ Omitir arquitectura hexagonal
+
+### SIEMPRE hacer:
+- ✅ **SEGUIR JERARQUÍA OBLIGATORIA: 1º @shared/ui/components → 2º @beweco/aurora-ui → 3º @heroui/react**
+- ✅ **VERIFICAR componentes custom (@shared/ui/components) ANTES de usar Aurora UI**
+- ✅ **Crear documento auxiliar `AUX_[Producto]_Guia_Desarrollo_TEXT.md` al inicio**
+- ✅ **Actualizar documento auxiliar al completar cada flujo/funcionalidad**
+- ✅ **Verificar completitud total antes de terminar desarrollo**
+- ✅ **Consultar páginas existentes para ver ejemplos de uso de componentes**
+- ✅ **Verificar las importaciones correctas con los alias configurados**
+- ✅ Desarrollar página por página con validación
+- ✅ Seguir arquitectura hexagonal estrictamente (`ui/pages/[Pagina].tsx`)
+- ✅ Usar inyección de dependencias en UI
+- ✅ Usar Tailwind CSS exclusivamente
+- ✅ Consultar `/beweosagency/src/settings` para tokens
+- ✅ Mantener Menu y Header en todas las páginas (están en layout)
+
+---
+
+**Recordatorio Final**: Desarrollo COMPLETO de TODO el flujo identificado en el análisis. NINGÚN desarrollo termina hasta que TODOS los flujos estén implementados y el documento auxiliar lo confirme. **RECUERDA: JERARQUÍA OBLIGATORIA: 1º @shared/ui/components → 2º @beweco/aurora-ui → 3º @heroui/react + SEGUIMIENTO OBLIGATORIO.**

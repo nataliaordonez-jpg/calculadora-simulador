@@ -1,0 +1,157 @@
+---
+alwaysApply: false
+---
+# Reglas de Diseño y Componentes - BeweOS
+
+## 1. Objetivo Principal
+
+El propósito de estas reglas es guiar la implementación técnica de los diseños de Figma de manera fiel y consistente. El objetivo es asegurar una transición precisa desde el diseño visual hacia componentes de código funcionales, reutilizables y alineados con la arquitectura del proyecto.
+
+**Nota Importante:** La `sidebar` (componente `Menu`) y la `topbar` no se deben interpretar como parte del diseño de una página específica. Son elementos de layout abstraídos.
+
+## 2. Principio Clave: Jerarquía de Componentes
+
+Antes de escribir cualquier código de un nuevo componente, se **debe** seguir estrictamente la siguiente jerarquía de búsqueda:
+
+🥇 **1. Prioridad Absoluta: Aurora UI (`@beweco/aurora-ui`)**
+   *   **Fuente de la Verdad**: Aurora UI define todas las reglas visuales, incluyendo **botones, cards, inputs y tamaños**.
+   *   **Proxy de HeroUI**: Es un proxy de HeroUI con personalizaciones específicas de BeweOS. Contiene tanto componentes base como personalizados.
+   *   **Acción**: Comprobar primero si el componente existe en `@beweco/aurora-ui`. Si es un componente custom, revisar su documentación en `shared/ui`.
+
+🥈 **2. Buscar en Shared UI (`src/shared/ui/components/`)**
+   *   **Componentes de Proyecto**: Si el componente no es parte de la librería base de Aurora UI, buscar en los componentes compartidos del proyecto.
+   *   Aquí residen componentes reutilizables más complejos o específicos del negocio.
+
+🥉 **3. Crear el Componente**
+   *   **Último Recurso**: Solo si el componente no existe en ninguna de las librerías anteriores, se procederá a su creación.
+   *   El nuevo componente debe construirse utilizando los primitivos de Aurora UI (Atomos) siempre que sea posible.
+
+## 3. Flujo de Trabajo: De Figma al Código
+
+### Fase 1: Análisis del Diseño con TalkToFigma MCP
+
+Antes de empezar a desarrollar, el modelo **debe** ejecutar la siguiente secuencia para entender el contexto del diseño:
+
+1.  **`get_document_info`**: Obtener información general del archivo Figma.
+2.  **`get_selection`**: Identificar los elementos seleccionados que se van a implementar.
+3.  **`read_my_design`**: Extraer los detalles visuales, de estructura, tipografía y colores del módulo seleccionado.
+
+### Fase 2: Implementación y Ubicación de Componentes
+
+Una vez analizado el diseño, para cada elemento visual se debe aplicar la **Jerarquía de Componentes**.
+
+#### Si el Componente ya Existe:
+
+*   Utilizar el componente encontrado en `@beweco/aurora-ui` (o `shared/ui`) aplicando las variantes (`variant`, `color`, `size`, etc.) y propiedades necesarias para que coincida con el diseño de Figma.
+
+#### Si el Componente NO Existe (necesita ser creado):
+
+Se debe tomar una decisión sobre su ubicación basada en su potencial de reutilización, alineada con la **Vertical Slice Architecture**:
+
+**A. ¿Es un componente genérico y reutilizable en múltiples features/páginas?**
+(Ej: un `Card` especial - **usar settings como referencia**, un `Uploader` personalizado, un `DataGrid` avanzado).
+
+*   **Sí** → El componente **debe** crearse en la carpeta de componentes compartidos:
+    *   `src/shared/ui/components/`
+    *   **Convención de Nombres:** `[ComponentName].tsx`
+
+**B. ¿Es un componente específico para una única feature o "slice"?**
+(Ej: un formulario de perfil de usuario, una tabla de configuración de marca blanca).
+
+*   **Sí** → El componente **debe** crearse dentro de la carpeta de componentes del slice contextual:
+    *   `src/[feature]/ui/[slice]/components/`
+    *   **Convención de Nombres:** `[ComponentName].tsx`
+
+**Nota:** Los componentes UI son **adaptadores** en la arquitectura hexagonal. Su responsabilidad es puramente presentacional y de interacción con el usuario, delegando la lógica de negocio a la capa de aplicación.
+
+### Fase 3: Validación
+
+Una vez implementado el componente, se debe validar que:
+*   Las **interacciones** (hover, focus, active, disabled) funcionen como se espera.
+*   Los **estados** (loading, error, empty) estén contemplados.
+*   El comportamiento **responsivo** se ajuste a las reglas del grid.
+
+---
+
+## 4. Guías del Sistema de Diseño
+
+### Grid Responsivo
+- **xl (1280px+):** 4 columnas
+- **lg (1024px):** 3 columnas
+- **md (744px):** 2 columnas
+- **sm (640px):** 1 columna
+- **xs (320px):** 1 columna
+
+### Animaciones
+*   **Duraciones estándar:** 150–600 ms
+*   **Curvas de aceleración:** `ease-in`, `ease-out`, `ease-in-out`
+*   **Accesibilidad:** Se debe respetar la preferencia de `prefers-reduced-motion`.
+
+### Modo Oscuro
+* Adaptaciones necesarias para fondos, bordes y textos
+* Debe probarse la visibilidad en ambos modos
+
+
+# Guía Rápida para Crear Componentes
+
+## ✅ Checklist Esencial
+
+Antes de hacer un Pull Request, verifica que tu componente cumpla con lo siguiente:
+
+- [ ] **Traducciones**: Interface `[ComponentName]Translations` definida y prop `translations` implementada.
+- [ ] **Defaults en Español**: `defaultTranslations` con textos en español.
+- [ ] **Textos Traducibles**: Todos los textos (labels, placeholders, etc.) usan el objeto de traducción `t`.
+- [ ] **Dark Mode**: Estilos `dark:` aplicados para el modo oscuro.
+- [ ] **Accesibilidad (A11y)**: `htmlFor` en labels y `aria-label` en elementos interactivos.
+- [ ] **Estructura Correcta**: Archivos `ComponentName.tsx`, `ComponentName.types.ts`, y `index.ts` en `src/components/nombredelcomponente/`
+- [ ] **Sin `any`**: Tipado estricto en todo el componente.
+
+---
+
+## 🌍 Internacionalización (i18n) - OBLIGATORIO
+
+**Meta**: Permitir que el consumidor de la librería provea las traducciones, sin forzar una herramienta específica.
+
+### Implementación en 3 Pasos
+
+1.  **Definir la Interface de Traducciones**
+    ```typescript
+    // En: src/components/componentname/ComponentName.types.ts
+    export interface [ComponentName]Translations {
+      label?: string;
+      placeholder?: string;
+      errorMessage?: string;
+      // ...otros textos que el componente necesite
+    }
+    ```
+
+2.  **Crear Traducciones por Defecto (en Español)**
+    ```typescript
+    // En: src/components/componentname/ComponentName.tsx
+    const defaultTranslations: Required<[ComponentName]Translations> = {
+      label: "Etiqueta por defecto",
+      placeholder: "Escribe aquí...",
+      errorMessage: "Este campo tiene un error.",
+    };
+    ```
+
+3.  **Consumir las Traducciones en el Componente**
+    ```typescript
+    // En: src/components/componentname/ComponentName.tsx
+    import { [ComponentName]Props } from './[ComponentName].types';
+    
+    export const [ComponentName]: React.FC<[ComponentName]Props> = ({
+      translations = {},
+      ...props
+    }) => {
+      // Combina los defaults con las props recibidas
+      const t = { ...defaultTranslations, ...translations };
+      
+      return (
+        <div>
+          <label>{t.label}</label>
+          <input placeholder={t.placeholder} />
+        </div>
+      );
+    };
+    ```

@@ -1,0 +1,718 @@
+---
+alwaysApply: false
+---
+# Reglas de Arquitectura y Estructura del Proyecto
+
+Este documento define las reglas y patrones a seguir para mantener la consistencia y calidad en nuestros proyectos frontend. La estructura se basa en una combinación de Arquitectura Hexagonal (Puertos y Adaptadores) y organización basada en funcionalidades (features).
+
+## 1. Estructura Principal de Directorios (`/src`)
+
+El código fuente se organiza en directorios que representan "features" o funcionalidades de negocio, además de un directorio `shared` para código reutilizable.
+
+```
+src/
+├── login/                # Feature: Login
+├── password-recovery/    # Feature: Recuperación de Contraseña
+├── reset-password/       # Feature: Restablecer Contraseña
+├── locales/              # Archivos de internacionalización
+└── shared/               # Código compartido entre features
+```
+
+## 2. Módulos de Feature (Arquitectura Hexagonal)
+
+Cada módulo de feature (por ejemplo, `login/`) debe seguir la estructura de Arquitectura Hexagonal para separar el dominio de la lógica de aplicación y la infraestructura.
+
+```
+login/
+├── application/  # Lógica de Aplicación (Casos de Uso)
+├── domain/       # Lógica de Negocio (Core)
+├── infrastructure/ # Implementaciones Externas (APIs, LocalStorage, etc.)
+└── ui/           # Componentes de UI (React)
+```
+
+### 2.1. `domain`
+
+Contiene el núcleo del negocio. No debe tener dependencias de otras capas.
+*   **`interfaces/`**: Define los contratos (interfaces TypeScript) para los modelos de dominio.
+    *   Ejemplo: `user.interface.ts`
+*   **`ports/`**: Define los "puertos", que son interfaces que describen cómo la aplicación se comunica con el mundo exterior.
+    *   Ejemplo: `login.port.ts` (define un método `login(credentials)` para ser implementado por un adaptador).
+*   **`validations/`**: Lógica de validación pura del dominio.
+    *   Ejemplo: `email.ts`
+
+### 2.2. `application`
+
+Orquesta el flujo de datos entre la UI y el dominio. Contiene los casos de uso.
+*   **`*.usecase.ts`**: Cada archivo representa un caso de uso específico. Importa puertos del `domain` y los usa para ejecutar la lógica de negocio.
+    *   Ejemplo: `login.usecase.ts`
+
+### 2.3. `infrastructure`
+
+Implementa los puertos del dominio. Es el puente entre la aplicación y los servicios externos.
+*   **`adapters/`**: Clases o funciones que implementan los puertos definidos en `domain/ports`. Aquí es donde se hacen las llamadas a la API, se accede a `localStorage`, etc.
+    *   Ejemplo: `login.adapter.ts` (implementa `LoginPort` y realiza la llamada a la API de login).
+*   **`mappers/`**: Transforma datos entre el formato de la API y el formato del dominio.
+*   **`mocks/`**: Mocks de datos para desarrollo y pruebas.
+
+### 2.4. `ui` - Vertical Slices UI
+
+Contiene todo lo relacionado con la interfaz de usuario. El directorio `ui` debe estructurarse utilizando **Vertical Slices UI**, donde el código se agrupa por sub-funcionalidades cohesivas en lugar de por tipo de archivo.
+
+#### Estructura de Vertical Slices UI
+
+```
+[feature]/
+└── ui/
+    ├── _shared/                      # Compartido entre sub-features
+    │   ├── components/               # Componentes compartidos entre slices
+    │   ├── hooks/                    # Hooks compartidos entre slices
+    │   ├── types/                    # Tipos compartidos entre slices
+    │   └── index.ts                  # Exportaciones de elementos compartidos
+    │
+    ├── [slice-1]/                    # Slice vertical: Sub-funcionalidad 1
+    │   ├── components/               # Componentes específicos del slice
+    │   │   ├── [component-1]/
+    │   │   └── [component-2]/
+    │   ├── hooks/                    # Hooks específicos del slice
+    │   ├── pages/                    # Páginas específicas del slice
+    │   │   └── [slice-1].page.tsx
+    │   └── index.ts                  # Exportaciones del slice
+    │
+    ├── [slice-2]/                    # Slice vertical: Sub-funcionalidad 2
+    │   ├── components/
+    │   ├── hooks/
+    │   ├── pages/
+    │   └── index.ts
+    │
+    ├── pages/                        # Solo páginas principales (root/container)
+    │   └── [feature].page.tsx
+    │
+    └── index.ts                      # Exportaciones principales del feature
+```
+
+#### Principios de Vertical Slices UI
+
+1. **Cohesión por Funcionalidad**: Agrupar componentes, páginas y hooks por la funcionalidad que implementan, no por tipo de archivo
+2. **Slice Independiente**: Cada slice debe ser autocontenido y tener mínimas dependencias con otros slices
+3. **Shared Explícito**: Elementos compartidos van en `_shared/` con prefijo underscore para indicar uso transversal
+4. **Index por Slice**: Cada slice exporta su API pública a través de `index.ts`
+5. **Pages en Root**: Solo páginas principales/contenedoras van en `pages/` root
+
+#### Cuándo crear un nuevo Slice
+
+Crear un nuevo slice cuando:
+- La funcionalidad tiene al menos 2-3 componentes relacionados
+- Existe una página dedicada para esa funcionalidad
+- La lógica es suficientemente cohesiva y diferente de otros slices
+- Se pueden identificar hooks o tipos específicos del contexto
+
+**Ejemplos de slices válidos:**
+- `content-creation/` - Todo relacionado con crear contenido nuevo
+- `content-history/` - Historial y visualización de contenidos publicados
+- `user-management/` - Gestión de usuarios (tabla, modales, permisos)
+- `analytics-dashboard/` - Dashboard con métricas y gráficos
+
+#### Cuándo usar _shared/
+
+Usar `_shared/` cuando:
+- Un componente se usa en 2+ slices diferentes
+- Un hook es genérico para el feature completo
+- Tipos son compartidos entre múltiples slices
+- Utilidades son transversales al feature
+
+**Nota**: Si un elemento de `_shared/` solo se usa en un slice, debe moverse a ese slice.
+
+#### Ejemplo Completo: social-networks
+
+```
+social-networks/
+├── application/
+├── domain/
+├── infrastructure/
+└── ui/
+    ├── _shared/                      # Elementos compartidos
+    │   ├── components/
+    │   │   ├── basic-config-section/
+    │   │   ├── action-cards/
+    │   │   ├── content-success-modal/
+    │   │   └── instagram-preview/
+    │   ├── hooks/
+    │   ├── types/
+    │   └── index.ts
+    │
+    ├── content-creation/             # Slice: Creación de contenido
+    │   ├── components/
+    │   │   ├── instagram-post-modal/
+    │   │   ├── instagram-story-modal/
+    │   │   ├── tiktok-video-modal/
+    │   │   ├── avatar-generator-modal/
+    │   │   ├── logo-generator-modal/
+    │   │   ├── create-template-modal/
+    │   │   └── plantilla-wizard-modal/
+    │   ├── hooks/
+    │   ├── pages/
+    │   │   ├── create-content.page.tsx
+    │   │   ├── create-template.page.tsx
+    │   │   └── create-campaign.page.tsx
+    │   └── index.ts
+    │
+    ├── content-history/              # Slice: Historial
+    │   ├── components/
+    │   │   └── content-history-modal/
+    │   ├── hooks/
+    │   ├── pages/
+    │   │   ├── history-tab.page.tsx
+    │   │   └── content-history.page.tsx
+    │   └── index.ts
+    │
+    ├── proposed-content/             # Slice: Contenido propuesto (Linda AI)
+    │   ├── components/
+    │   │   ├── content-carousel/
+    │   │   ├── proposed-content-cards/
+    │   │   ├── proposed-content-card/
+    │   │   └── proposed-content-preview-modal/
+    │   ├── hooks/
+    │   ├── pages/
+    │   │   ├── proposed-content-tab.page.tsx
+    │   │   ├── proposed-content-list.page.tsx
+    │   │   └── contenidos-ai.page.tsx
+    │   └── index.ts
+    │
+    ├── campaigns/                    # Slice: Campañas de WhatsApp
+    │   ├── components/
+    │   │   ├── whatsapp-campaign-modal/
+    │   │   └── whatsapp-preview/
+    │   ├── hooks/
+    │   ├── pages/
+    │   │   ├── campanas-new.page.tsx
+    │   │   └── whatsapp-campaign-full.page.tsx
+    │   └── index.ts
+    │
+    ├── pages/                        # Páginas principales
+    │   ├── social-networks.page.tsx
+    │   └── redes-sociales.page.tsx
+    │
+    └── index.ts                      # Exportaciones principales
+```
+
+#### Convenciones de Nombres
+
+- **Slices**: kebab-case descriptivo (`content-creation/`, `user-management/`)
+- **Componentes**: PascalCase con sufijo `.component.tsx` (`instagram-post-modal.component.tsx`)
+- **Páginas**: kebab-case con sufijo `.page.tsx` (`create-content.page.tsx`)
+- **Hooks**: camelCase con prefijo `use` (`useContentForm.ts`)
+- **Types**: PascalCase con sufijo `.types.ts` (`ContentCarousel.types.ts`)
+
+#### Importaciones y Exportaciones
+
+**En cada slice (`[slice]/index.ts`):**
+
+```typescript
+// Exportar componentes
+export { InstagramPostModal } from './components/instagram-post-modal/instagram-post-modal.component';
+export { InstagramStoryModal } from './components/instagram-story-modal/instagram-story-modal.component';
+
+// Exportar páginas
+export { CreateContentPage } from './pages/create-content.page';
+export { CreateTemplatePage } from './pages/create-template.page';
+
+// Exportar hooks
+export { useContentForm } from './hooks/useContentForm';
+
+// Exportar tipos
+export type { ContentFormData, ContentFormProps } from './types';
+```
+
+**En el index principal (`ui/index.ts`):**
+
+```typescript
+// Re-exportar desde slices
+export * from './_shared';
+export * from './content-creation';
+export * from './content-history';
+export * from './proposed-content';
+export * from './campaigns';
+
+// Exportar páginas principales
+export { SocialNetworksPage } from './pages/social-networks.page';
+```
+
+**Importaciones en otros archivos:**
+
+```typescript
+// ✅ Importar desde el slice
+import { InstagramPostModal, CreateContentPage } from '@social-networks/ui/content-creation';
+
+// ✅ Importar desde el index principal
+import { InstagramPostModal, ContentCarousel } from '@social-networks/ui';
+
+// ❌ No importar directamente desde componentes internos
+import { InstagramPostModal } from '@social-networks/ui/content-creation/components/instagram-post-modal/instagram-post-modal.component';
+```
+
+*   **Estilos**: Los archivos `*.scss` deben estar coubicados con su componente React correspondiente.
+
+## 2.5. Migración de UI Plana a Vertical Slices
+
+Si estás trabajando en un feature con estructura UI plana (componentes y páginas en carpetas separadas), sigue estos pasos para migrar a Vertical Slices:
+
+### Paso 1: Identificar Sub-funcionalidades
+
+Analizar el feature y agrupar componentes/páginas por funcionalidad cohesiva:
+- ¿Qué flujos de usuario existen?
+- ¿Qué páginas/componentes trabajan juntos?
+- ¿Hay contextos claros de negocio?
+
+### Paso 2: Definir Slices
+
+Crear lista de slices propuestos con:
+- Nombre descriptivo del slice
+- Componentes que pertenecen al slice
+- Páginas que pertenecen al slice
+- Hooks/tipos específicos
+
+### Paso 3: Crear Estructura de Directorios
+
+```bash
+mkdir -p ui/_shared/components ui/_shared/hooks ui/_shared/types
+mkdir -p ui/[slice-1]/components ui/[slice-1]/pages ui/[slice-1]/hooks
+mkdir -p ui/[slice-2]/components ui/[slice-2]/pages ui/[slice-2]/hooks
+```
+
+### Paso 4: Mover Archivos
+
+Mover componentes y páginas a sus slices correspondientes:
+```bash
+mv ui/components/[component-name]/ ui/[slice]/components/
+mv ui/pages/[page-name].page.tsx ui/[slice]/pages/
+```
+
+### Paso 5: Crear index.ts por Slice
+
+En cada slice, crear `index.ts` exportando su API pública.
+
+### Paso 6: Actualizar Imports
+
+Actualizar todas las importaciones en:
+- Páginas principales
+- Componentes que importen de otros slices
+- Index principal del feature
+
+### Paso 7: Verificar y Limpiar
+
+- Verificar que no haya errores de compilación
+- Eliminar carpetas vacías
+- Validar que los tests sigan funcionando
+
+## 3. Código Compartido (`shared/`)
+
+El directorio `shared/` contiene código que no es específico de una sola feature y puede reutilizarse en toda la aplicación.
+
+```
+shared/
+├── components/   # Componentes genéricos (Button, Input, Alert)
+├── context/      # Contextos React para estado global
+├── providers/    # Proveedores de contexto
+├── styles/       # Estilos globales (variables, mixins, etc.)
+└── utils/        # Funciones de utilidad genéricas
+```
+
+## 4. Estilos
+
+*   **Tailwind CSS** se utiliza para utilidades CSS. La configuración está en `tailwind.config.js`.
+*   Para estilos más complejos o específicos de componentes, se utiliza **SCSS**.
+*   Los archivos `.scss` deben estar ubicados con su componente React correspondiente.
+*   Los estilos globales (resets, temas, etc.) se encuentran en `shared/styles/`.
+
+## 5. Convenciones de Nombres de Archivos
+
+*   Casos de Uso: `[feature].usecase.ts` (ej., `login.usecase.ts`)
+*   Puertos: `[feature].port.ts` (ej., `login.port.ts`)
+*   Adaptadores: `[feature].adapter.ts` (ej., `login.adapter.ts`)
+*   DTOs: `[entity].dto.ts` (ej., `user-credentials.dto.ts`)
+*   Interfaces de Dominio: `[entity].interface.ts` (ej., `account-info.interface.ts`)
+*   Enums: `enum-[name].enum.ts` (ej., `enum-status.enum.ts`)
+*   Mocks: `[entity].mock.ts` (ej., `user.mock.ts`)
+*   Componentes React: `[ComponentName].tsx`
+*   Páginas: `[PageName].page.tsx`
+*   Hooks: `use[HookName].tsx`
+*   Estilos: `[component].scss` o `[page].scss`
+
+## 6. Internacionalización (i18n)
+
+*   El archivo de configuración principal es `i18n.ts`.
+*   Las traducciones se gestionan en formato JSON.
+*   Los archivos de idioma se encuentran en `src/locales/[lang]/[namespace].json`.
+*   Existe un script para sincronizar traducciones (`scripts/sync-locales.js`).
+
+### 6.1. Estructura de Directorios
+
+Todos los archivos de configuración regional **DEBEN** estar ubicados en `src/locales/` siguiendo esta estructura:
+
+```
+src/
+└── locales/
+    ├── es/                    # Configuración regional Español
+    │   ├── common.json        # ⭐ Elementos REUTILIZABLES (botones, campos, ciudades, etc.)
+    │   ├── users.json         # Solo específico del módulo
+    │   ├── settings.json      # Solo específico del módulo
+    │   ├── menu.json         # Solo específico del módulo
+    │   └── [feature].json    # Solo específico del módulo
+    ├── en/                    # Configuración regional Inglés
+    │   ├── common.json        # ⭐ Elementos REUTILIZABLES (botones, campos, ciudades, etc.)
+    │   ├── users.json         # Solo específico del módulo
+    │   ├── settings.json      # Solo específico del módulo
+    │   ├── menu.json         # Solo específico del módulo
+    │   └── [feature].json    # Solo específico del módulo
+    └── pt/                    # Configuración regional Portugués
+        ├── common.json        # ⭐ Elementos REUTILIZABLES (botones, campos, ciudades, etc.)
+        ├── users.json         # Solo específico del módulo
+        ├── settings.json      # Solo específico del módulo
+        ├── menu.json         # Solo específico del módulo
+        └── [feature].json    # Solo específico del módulo
+```
+
+### 6.2. Convenciones de Nombres
+
+**REGLA CRÍTICA**: Todas las claves de traducción **DEBEN** usar la convención `snake_case` con dos estructuras diferentes:
+
+#### **Para common.json (Elementos Reutilizables):**
+Estructura simple: `{category}_{element}`
+
+#### **Para archivos específicos del módulo:**
+Estructura detallada: `{module}_{subpage}_{key}`
+
+### 6.3. Reglas de Separación: Común vs Específico del Módulo
+
+#### **🚨 PRINCIPIO CRÍTICO: Máxima Reutilización**
+
+**REGLA DE ORO**: Si un elemento de texto se puede usar en más de un módulo sin cambios, **DEBE** ir en `common.json`.
+
+#### **Marco de Decisión:**
+```
+Pregúntate: "¿Se puede usar este texto exacto en otro módulo?"
+├── SÍ → common.json (usa formato {category}_{element})
+├── TAL VEZ → common.json (preferir reutilización)
+└── NO (claramente específico del módulo) → [module].json (usa formato {module}_{subpage}_{key})
+```
+
+### 6.4. Guías para common.json
+
+#### **Lo que DEBE ir en common.json:**
+
+**🔘 BOTONES (Acciones Genéricas):**
+```json
+{
+  "button_save": "Guardar",
+  "button_cancel": "Cancelar", 
+  "button_edit": "Editar",
+  "button_delete": "Eliminar",
+  "button_create": "Crear",
+  "button_update": "Actualizar",
+  "button_reset": "Restablecer",
+  "button_close": "Cerrar",
+  "button_confirm": "Confirmar",
+  "button_continue": "Continuar",
+  "button_back": "Atrás",
+  "button_next": "Siguiente",
+  "button_finish": "Finalizar",
+  "button_send": "Enviar",
+  "button_upload": "Subir",
+  "button_download": "Descargar",
+  "button_export": "Exportar",
+  "button_import": "Importar",
+  "button_search": "Buscar",
+  "button_filter": "Filtrar",
+  "button_clear": "Limpiar",
+  "button_refresh": "Actualizar"
+}
+```
+
+**🔘 CAMPOS DE FORMULARIO (Etiquetas Genéricas):**
+```json
+{
+  "field_name": "Nombre",
+  "field_email": "Correo electrónico", 
+  "field_phone": "Teléfono",
+  "field_city": "Ciudad",
+  "field_country": "País",
+  "field_address": "Dirección",
+  "field_role": "Rol",
+  "field_language": "Idioma",
+  "field_password": "Contraseña",
+  "field_confirm_password": "Confirmar contraseña",
+  "field_date": "Fecha",
+  "field_time": "Hora",
+  "field_description": "Descripción",
+  "field_comments": "Comentarios",
+  "field_status": "Estado",
+  "field_type": "Tipo",
+  "field_category": "Categoría"
+}
+```
+
+**🔘 PLACEHOLDERS (Pistas Genéricas):**
+```json
+{
+  "placeholder_enter_name": "Ingresa tu nombre",
+  "placeholder_enter_email": "Ingresa tu correo electrónico",
+  "placeholder_select_city": "Selecciona una ciudad",
+  "placeholder_select_role": "Selecciona un rol",
+  "placeholder_select_language": "Selecciona un idioma",
+  "placeholder_enter_password": "Ingresa tu contraseña",
+  "placeholder_search": "Buscar...",
+  "placeholder_optional": "Opcional",
+  "placeholder_select_option": "Selecciona una opción"
+}
+```
+
+**🔘 ROLES DEL SISTEMA (Toda la Aplicación):**
+```json
+{
+  "role_admin": "Administrador",
+  "role_user": "Usuario",
+  "role_editor": "Editor",
+  "role_viewer": "Visualizador",
+  "role_moderator": "Moderador",
+  "role_manager": "Gerente"
+}
+```
+
+**🔘 DATOS GEOGRÁFICOS:**
+```json
+{
+  "city_bogota": "Bogotá",
+  "city_medellin": "Medellín", 
+  "city_cali": "Cali",
+  "city_barranquilla": "Barranquilla",
+  "city_cartagena": "Cartagena",
+  "country_colombia": "Colombia",
+  "country_venezuela": "Venezuela",
+  "country_ecuador": "Ecuador"
+}
+```
+
+**🔘 IDIOMAS DEL SISTEMA:**
+```json
+{
+  "language_spanish": "Español",
+  "language_english": "Inglés", 
+  "language_portuguese": "Portugués"
+}
+```
+
+**🔘 ESTADOS Y MENSAJES COMUNES:**
+```json
+{
+  "status_active": "Activo",
+  "status_inactive": "Inactivo",
+  "status_pending": "Pendiente",
+  "status_completed": "Completado",
+  "status_cancelled": "Cancelado",
+  "message_loading": "Cargando...",
+  "message_success": "Éxito",
+  "message_error": "Error",
+  "message_no_data": "No hay datos disponibles",
+  "message_confirm_delete": "¿Estás seguro de que quieres eliminar este elemento?"
+}
+```
+
+**🔘 VALIDACIONES (Genéricas):**
+```json
+{
+  "validation_required": "Este campo es obligatorio",
+  "validation_invalid_email": "El correo electrónico no es válido",
+  "validation_min_length": "Mínimo {count} caracteres",
+  "validation_max_length": "Máximo {count} caracteres",
+  "validation_passwords_not_match": "Las contraseñas no coinciden"
+}
+```
+
+#### **Lo que va en [module].json:**
+
+**🔘 TÍTULOS ESPECÍFICOS DEL MÓDULO:**
+- Encabezados de sección únicos para ese módulo
+- Títulos de página específicos de la feature
+- Títulos de pasos de flujo de trabajo
+
+**🔘 DESCRIPCIONES CONTEXTUALES:**
+- Texto de ayuda específico para esa feature
+- Explicaciones específicas de la feature
+- Descripciones de flujos de trabajo del módulo
+
+**🔘 ACCIONES ESPECIALIZADAS:**
+- Botones con funcionalidad específica del módulo
+- Acciones que solo tienen sentido en ese contexto
+
+**🔘 ESTADOS ESPECÍFICOS DE LA FEATURE:**
+- Estados vacíos únicos para el módulo
+- Mensajes de éxito/error con contexto específico
+- Indicadores de estado específicos del módulo
+
+### 6.5. Ejemplos
+
+#### ✅ Ejemplos CORRECTOS para common.json:
+```json
+{
+  "button_save": "Guardar",
+  "button_delete": "Eliminar", 
+  "field_name": "Nombre",
+  "field_email": "Correo electrónico",
+  "placeholder_enter_name": "Ingresa tu nombre",
+  "role_admin": "Administrador",
+  "city_bogota": "Bogotá",
+  "language_spanish": "Español",
+  "status_active": "Activo",
+  "message_loading": "Cargando...",
+  "validation_required": "Este campo es obligatorio"
+}
+```
+
+#### ✅ Ejemplos CORRECTOS para settings.json:
+```json
+{
+  "settings_profile_information_title": "Información Personal",
+  "settings_profile_information_description": "Actualiza tu información personal y de contacto",
+  "settings_profile_appearance_title": "Apariencia", 
+  "settings_profile_appearance_description": "Personaliza cómo se ve la aplicación para ti",
+  "settings_profile_password_title": "Contraseña",
+  "settings_profile_password_description": "Gestiona la seguridad de tu cuenta",
+  "settings_profile_password_reset_button": "Restablecer contraseña",
+  "settings_profile_language_title": "Idioma e Internacionalización",
+  "settings_profile_language_description": "Selecciona tu idioma preferido para la interfaz",
+  "settings_profile_language_interface_label": "Idioma de la interfaz"
+}
+```
+
+#### ❌ Ejemplos INCORRECTOS:
+```json
+// ❌ Estos deberían estar en common.json, no en settings.json:
+{
+  "settings_save_button": "Guardar",        // Usar button_save de common
+  "settings_name_field": "Nombre",          // Usar field_name de common  
+  "settings_email_placeholder": "Email",    // Usar placeholder_enter_email de common
+  "settings_admin_role": "Admin",           // Usar role_admin de common
+  "settings_bogota_city": "Bogotá"          // Usar city_bogota de common
+}
+
+// ❌ Convenciones de nombres incorrectas:
+{
+  "settingsProfileTitle": "...",            // camelCase
+  "settings-profile-title": "...",          // kebab-case
+  "SETTINGS_PROFILE_TITLE": "...",          // UPPER_SNAKE_CASE
+  "settings.profile.title": "..."           // notación de punto
+}
+```
+### 6.6. Configuración
+
+*   **Gestión de Traducciones**: Utiliza `@tolgee/react` como librería de i18n
+*   **Ubicación de Archivos**: Los archivos de configuración regional se almacenan en `src/locales/[lang]/[module].json`
+*   **Formato**: Archivos JSON con estructura clave-valor plana usando claves en snake_case
+*   **Idiomas Soportados**: Español (es), Inglés (en), Portugués (pt)
+
+### 6.7. Ejemplos de Uso
+
+```typescript
+// ✅ Uso CORRECTO priorizando common.json
+import { useTranslate } from '@tolgee/react';
+
+const ProfileComponent = () => {
+  const { t } = useTranslate();
+  
+  // ⭐ De common.json (siempre preferir estos)
+  const saveButton = t('button_save');           // ✅ Reutilizable
+  const nameLabel = t('field_name');             // ✅ Reutilizable
+  const emailLabel = t('field_email');           // ✅ Reutilizable
+  const namePlaceholder = t('placeholder_enter_name'); // ✅ Reutilizable
+  const adminRole = t('role_admin');             // ✅ Reutilizable
+  const bogotaCity = t('city_bogota');          // ✅ Reutilizable
+  
+  // 🎯 De settings.json (solo específico del módulo)
+  const title = t('settings_profile_information_title');        // ✅ Específico del módulo
+  const description = t('settings_profile_information_description'); // ✅ Específico del módulo
+  const appearanceTitle = t('settings_profile_appearance_title'); // ✅ Específico del módulo
+  
+  return (
+    <div>
+      <h1>{title}</h1>               {/* Específico del módulo */}
+      <p>{description}</p>           {/* Específico del módulo */}
+      
+      <form>
+        <label>{nameLabel}</label>   {/* Común - reutilizable */}
+        <Input placeholder={namePlaceholder} /> {/* Común - reutilizable */}
+        
+        <label>{emailLabel}</label>  {/* Común - reutilizable */}
+        <Input placeholder={t('placeholder_enter_email')} /> {/* Común - reutilizable */}
+        
+        <Button>{saveButton}</Button> {/* Común - reutilizable */}
+      </form>
+      
+      <h2>{appearanceTitle}</h2>     {/* Específico del módulo */}
+    </div>
+  );
+};
+
+// ✅ CORRECTO: Maximizando reutilización desde common.json
+const UserTableComponent = () => {
+  const { t } = useTranslate();
+  
+  return (
+    <div>
+      {/* Título específico del módulo */}
+      <h1>{t('users_table_team_title')}</h1>
+      
+      {/* Botones reutilizables de common.json */}
+      <Button>{t('button_edit')}</Button>
+      <Button>{t('button_delete')}</Button>
+      <Button>{t('button_create')}</Button>
+      
+      {/* Etiquetas de campo reutilizables */}
+      <Input label={t('field_name')} />
+      <Input label={t('field_email')} />
+      
+      {/* Estado vacío específico del módulo */}
+      <p>{t('users_table_empty_state')}</p>
+    </div>
+  );
+};
+
+// ❌ Uso INCORRECTO
+const BadComponent = () => {
+  const { t } = useTranslate();
+  
+  return (
+    <div>
+      {/* ❌ No crear versiones específicas del módulo de elementos comunes */}
+      <Button>{t('users_save_button')}</Button>      // Debería usar button_save
+      <Input label={t('users_name_field')} />       // Debería usar field_name
+      <Input label={t('users_email_field')} />      // Debería usar field_email
+      
+      {/* ❌ No hardcodear texto */}
+      <Button>Guardar</Button>                      // Debería usar t('button_save')
+      
+      {/* ❌ Convenciones de nombres incorrectas */}
+      <h1>{t('users.table.title')}</h1>            // notación de punto
+      <h2>{t('usersTableTitle')}</h2>               // camelCase
+    </div>
+  );
+};
+```
+
+### 6.8. Estrategia de Migración para Proyectos Existentes
+
+Al actualizar proyectos existentes para seguir estas reglas:
+
+1.  **Auditar traducciones existentes**: Identificar traducciones duplicadas o similares entre módulos
+2.  **Extraer a common.json**: Mover todos los elementos reutilizables a common.json
+3.  **Actualizar importaciones**: Cambiar todos los componentes para usar traducciones comunes donde aplique
+4.  **Limpiar archivos de módulo**: Eliminar traducciones duplicadas de archivos específicos de módulo
+5.  **Verificar cobertura**: Asegurar que todos los elementos comunes estén categorizados correctamente y disponibles
+
+**Recuerda**: El objetivo es máxima reutilización y consistencia en toda la aplicación.
+
+## Referencia de Implementación
+
+Para un ejemplo completo de Vertical Slices UI implementado, revisar:
+- [`src/social-networks/ui/`](src/social-networks/ui/) - Implementación de referencia con múltiples slices
+- [`src/social-networks/ui/README.md`](src/social-networks/ui/README.md) - Documentación específica del feature
+

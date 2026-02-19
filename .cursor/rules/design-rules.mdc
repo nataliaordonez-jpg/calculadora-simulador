@@ -1,0 +1,135 @@
+---
+alwaysApply: true
+---
+
+# REGLAS DE DISEÑO — INQUEBRANTABLES
+
+Documento fuente: [Design rules cursor_V1.0.md](mdc:Design rules cursor_V1.0.md)
+
+Estas reglas son OBLIGATORIAS y NO NEGOCIABLES. Toda generación de código, componentes, estilos o interfaces DEBE cumplirlas sin excepción.
+
+---
+
+## 1. TIPOGRAFÍA
+
+### Fuentes (OBLIGATORIAS)
+- **Principal: Inter** (Google Fonts) → Títulos y Cuerpo de texto
+- **Secundaria: Merriweather** (Google Fonts) → Exclusiva para resaltar textos o palabras de IA (LINDA)
+
+### Escala Tipográfica (NO MODIFICAR)
+- **H1:** 32px (2rem) · Bold (700) · line-height 120% → Títulos de página principales
+- **H2:** 24px (1.5rem) · SemiBold (600) · line-height 130% → Títulos de sección
+- **H3:** 20px (1.25rem) · Medium (500) · line-height 140% → Títulos de tarjeta
+- **Body:** 16px (1rem) · Regular (400) · line-height 150% → Texto general
+- **Small:** 14px (0.875rem) · Regular (400) · line-height 150% → Metadatos, fechas
+- **Button:** 14px (0.875rem) · SemiBold (600) · line-height 100% → Texto en botones (siempre mayúscula inicial)
+
+PROHIBIDO usar otras fuentes, tamaños o pesos que no estén en esta escala.
+
+---
+
+## 2. SISTEMA DE COLORES
+
+### Primary (Blue Tech) — Color DOMINANTE
+- Base (400): `#60A5FA`
+- Escala: 100 `#DFEDFE` · 200 `#B0D2FC` · 300 `#88BCFB` · 400 `#60A5FA` · 500 `#5694E1` · 600 `#487CBB` · 700 `#355B8A`
+- Uso: Botones primarios, enlaces principales, acciones clave, elementos protagonistas
+- REGLA: Solo existe UN Primary dominante. Todas las variaciones derivan del 500.
+
+### Secondary (Green Growth)
+- Base (400): `#34D399`
+- Escala: 100 `#D6F6EB` · 200 `#9AE9CC` · 300 `#67DEB2` · 400 `#34D399` · 500 `#2FBE8A` · 600 `#279E73` · 700 `#1D7454`
+- Uso: Acciones secundarias, elementos complementarios, componentes activos no críticos
+- REGLA: NO debe competir visualmente con Primary. NO reemplaza al Primary en CTAs principales.
+
+### Colores Estructurales (NO usar como botones principales)
+- **Base Oscura:** `#0A2540` → fondos profundos, secciones dark, texto fuerte
+- **Superficie Profunda:** `#355452` → tarjetas oscuras, contenedores, bloques secundarios
+- **Teal Neutro:** `#75C9C8` → elementos de apoyo, fondos intermedios, divisores suaves
+
+### Fondos y Superficies Suaves
+- **Cian Claro:** `#67E8F9` → fondos destacados suaves
+- **Aqua Muy Suave:** `#CCFBF1` → backgrounds amplios, tarjetas claras
+- **Amarillo Suave:** `#FEF3C7` → fondos cálidos ligeros, contexto IA (LINDA)
+
+### Accent (Énfasis Controlado)
+- `#FAD19E` → Badges, highlights, micro detalles, indicadores sutiles
+- REGLA: Uso LIMITADO. NO en grandes superficies. NO competir con Primary ni Secondary.
+
+### Paleta Semántica (Feedback)
+- **Success:** `#4ADE80`
+- **Error:** `#F87171`
+- **Warning:** `#FBBF24`
+- **Info:** `#38BDF8`
+
+### Reglas Generales del Sistema de Color
+- Existe 1 Primary dominante — SIEMPRE.
+- Existe 1 Secondary complementario — SIEMPRE.
+- Accent es de uso controlado y limitado.
+- Los colores estructurales NUNCA se usan como botones principales.
+- Los colores semánticos se definen en paleta independiente.
+- Mantener coherencia jerárquica y consistencia visual en TODOS los componentes.
+
+PROHIBIDO inventar colores nuevos fuera de esta paleta.
+
+---
+
+## 3. ICONOGRAFÍA
+
+- **Librería OBLIGATORIA:** Solar Icon Set (https://icones.js.org/collection/solar)
+- **Estilo principal:** Outline (Lineal)
+- **Variante alternativa:** Bold Duotone (solo en estados destacados)
+- **Stroke:** 1.5px
+- **Corner Radius:** Rounded (Redondeado) — PROHIBIDO esquinas rectas agresivas
+- **Grid base:** 24×24px
+- **Color inactivo:** `#64748B` (Slate 500)
+- **Color activo:** `#131313` (Onyx)
+
+### PROHIBIDO
+- Estilo "Broken" → genera ruido visual
+- Estilo Bold (Sólido) → demasiado pesado y agresivo
+- Mezclar variantes de la librería
+
+---
+
+## 4. LAYOUT Y ESTRUCTURA
+
+### Grid (Base 8)
+Todas las medidas DEBEN ser múltiplos de **8** (o **4** para detalles finos).
+
+**Spacing Tokens:**
+- **4px (xs):** Espacio mínimo entre icono y texto
+- **8px (sm):** Separación interna en botones
+- **16px (md):** Separación estándar entre elementos de tarjeta
+- **24px (lg):** Separación entre tarjetas
+- **32px (xl):** Separación entre secciones internas
+- **48px (2xl):** Separación de secciones mayores
+
+**Grid de Columnas (Desktop – 1440px):**
+- Columnas: 12
+- Gutter: 24px
+- Margin lateral: 48px
+- Max-width contenedor: 1152px (centrado)
+
+### Espaciado
+- Max-width: 1152px (`max-w-6xl`)
+- Padding horizontal: 24px (móvil) / 48px (desktop)
+- Padding vertical estándar: 96px (`py-24`)
+- Hero: min-height = viewport − navbar (124px)
+
+---
+
+## 5. COMPONENTES BASE
+
+### Botones
+- **Forma:** Full Rounded — SIEMPRE
+- **Estructura:** Contenedor + Texto + Icono (opcional)
+- **Tamaños:** Small, Medium, Large
+- **Estados:** Default, Hover, Active/Pressed, Disabled, Loading
+- **Tipos:** Primary, Secondary, Tertiary, Ghost/Text
+
+### Cards
+- **Forma:** Rounded — SIEMPRE
+- **Estructura:** Contenedor + Header (opcional) + Body + Footer (opcional)
+- **Tipos:** Informativa, Interactiva, Acción, Resumen/Métricas
+- **Estados:** Default, Hover, Selected, Disabled
