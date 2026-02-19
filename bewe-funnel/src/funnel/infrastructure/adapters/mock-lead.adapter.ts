@@ -24,6 +24,7 @@ export class MockLeadAdapter implements ILeadRepository {
   }
 
   async checkExistingClient(_email: string): Promise<boolean> {
+    void _email
     await new Promise(resolve => setTimeout(resolve, 300))
     return false
   }

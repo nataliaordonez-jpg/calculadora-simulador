@@ -3,8 +3,6 @@ import { Button, Card, IconComponent } from '@beweco/aurora-ui'
 import { FunnelLayout } from '../../_shared/components/funnel-layout/FunnelLayout'
 import { ShareModal } from '../components/ShareModal'
 import { useFunnelContext } from '../../_shared/context/funnel-context'
-import { useFunnelNavigation } from '../../_shared/hooks/use-funnel-navigation'
-import { FunnelStep } from '@funnel/domain/enums/funnel-step.enum'
 import { runDiagnostic } from '@funnel/application/run-diagnostic.usecase'
 import { QUESTIONS } from '@funnel/domain/constants/questions.constant'
 import { Sector } from '@funnel/domain/enums/sector.enum'
@@ -154,48 +152,6 @@ function getScenarioAutomation(active: 'conservador' | 'realista' | 'optimista')
   if (active === 'conservador') return 60
   if (active === 'optimista') return 85
   return 70
-}
-
-function getTestimonials(sector: Sector, facturacionMensual: number) {
-  const monthlyText = `${formatCurrency(facturacionMensual)}/mes (similar a la tuya)`
-  const base = [
-    {
-      sector: Sector.SALUD,
-      quote: 'En 2 meses redujimos el no-show del 28% al 9%. Son 34 citas más al mes que antes se perdían.',
-      author: 'Ana Martínez',
-      business: 'Clínica Dental San Ángel',
-      monthly: monthlyText,
-    },
-    {
-      sector: Sector.FITNESS,
-      quote: 'Linda responde el 80% de las consultas sola. Mi recepcionista ahora se enfoca en cerrar ventas.',
-      author: 'Roberto Gómez',
-      business: 'Gimnasio FitZone',
-      monthly: monthlyText,
-    },
-    {
-      sector: Sector.BIENESTAR,
-      quote: 'El primer mes capturamos $4,100 en ventas que antes se perdían por responder fuera de horario.',
-      author: 'Laura Pérez',
-      business: 'Spa Bienestar Total',
-      monthly: monthlyText,
-    },
-    {
-      sector: Sector.BELLEZA,
-      quote: 'Las respuestas automáticas nos devolvieron ventas que se perdían por tardanza y agenda sin seguimiento.',
-      author: 'Mariana López',
-      business: 'Studio Glow Beauty',
-      monthly: monthlyText,
-    },
-  ]
-
-  const prioritized = [...base].sort((a, b) => {
-    if (a.sector === sector && b.sector !== sector) return -1
-    if (b.sector === sector && a.sector !== sector) return 1
-    return 0
-  })
-
-  return prioritized.slice(0, 3)
 }
 
 function buildDiagnosticsData(
@@ -748,7 +704,6 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
 
 export function ResultsDashboardPage() {
   const { state, dispatch } = useFunnelContext()
-  const { goToStep } = useFunnelNavigation()
   const act2Ref = useRef<HTMLElement>(null)
   const act7Ref = useRef<HTMLElement>(null)
   const scenarioContentRef = useRef<HTMLDivElement>(null)
@@ -822,19 +777,11 @@ export function ResultsDashboardPage() {
       ? data.escenarioOptimista
       : data.escenarioRealista
   const automationRate = getScenarioAutomation(activeScenario)
-  const scenarioBars = {
-    before: data.totalPerdidaMensual,
-    after: activeScenarioData.mes4_6,
-  }
   const stage1Recovery = Math.round(activeScenarioData.mes1_3 * 0.5)
   const stage1NoShow   = Math.round(activeScenarioData.mes1_3 * 0.25)
   const stage1Savings  = Math.round(activeScenarioData.mes1_3 * 0.25)
   const stage2IngresosAdicionales = Math.round(activeScenarioData.mes4_6 * 0.76)
   const stage2ClientesRecuperados = Math.round(activeScenarioData.mes4_6 * 0.24)
-  const testimonials = useMemo(
-    () => getTestimonials(data.sector, data.facturacionMensual),
-    [data.sector, data.facturacionMensual]
-  )
 
   const goToAct7 = () => {
     act7Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -843,8 +790,6 @@ export function ResultsDashboardPage() {
     act2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const handleShare = () => goToStep(FunnelStep.SHARE)
-  const handleScheduleDemo = () => window.open('https://bewe.co/demo', '_blank')
   const handleFreeTrial = () => window.open('https://bewe.co/demo', '_blank')
 
   /**

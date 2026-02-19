@@ -147,6 +147,7 @@ export function FunnelProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useFunnelContext(): FunnelContextValue {
   const ctx = useContext(FunnelContext)
   if (!ctx) {
