@@ -336,7 +336,7 @@ function RevealCard({
   )
 }
 
-function ChatSimulation({ serviceType, businessName, sector }: { serviceType: string; businessName: string; sector: Sector }) {
+function ChatSimulation({ serviceType, businessName, sector, managesAppointments = true }: { serviceType: string; businessName: string; sector: Sector; managesAppointments?: boolean }) {
   const [chatRef, chatVisible] = useInView<HTMLDivElement>(0.3)
   const [visibleCount, setVisibleCount] = useState(0)
   const [showTyping, setShowTyping] = useState(false)
@@ -354,6 +354,7 @@ function ChatSimulation({ serviceType, businessName, sector }: { serviceType: st
     [Sector.BIENESTAR]: '💆',
   }[sector] ?? '📋'
 
+  // ── Conversación CON citas / clases ──
   const confirmationContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <p className="text-small font-semibold text-base-dark">¡Listo! ✅ Tu cita está confirmada:</p>
@@ -363,12 +364,76 @@ function ChatSimulation({ serviceType, businessName, sector }: { serviceType: st
     </div>
   )
 
-  const messages: { side: string; content: ReactNode }[] = [
+  const appointmentMessages: { side: string; content: ReactNode }[] = [
     { side: 'right', content: `Hola, quisiera saber si tienen disponibilidad para ${serviceType} mañana a las 3pm` },
     { side: 'left',  content: `¡Hola! Claro que sí. Tengo disponibilidad mañana a las 3:00 PM para ${serviceType}. ¿Te gustaría que te lo agende?` },
     { side: 'right', content: 'Perfecto, sí por favor' },
     { side: 'left',  content: confirmationContent },
   ]
+
+  // ── Conversación SIN citas / clases — alternativa por nicho ──
+  const alternativeMessages: Record<Sector, { side: string; content: ReactNode }[]> = {
+    [Sector.FITNESS]: [
+      { side: 'right', content: 'Hola, ¿cuánto cuesta la membresía mensual y qué incluye?' },
+      { side: 'left',  content: `¡Hola! 💪 En ${businessName} tenemos planes para todos los objetivos. ¿Te cuento qué incluye cada uno?` },
+      { side: 'right', content: 'Sí, me interesa el plan completo' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">💪 Planes disponibles en {businessName}:</p>
+          <p className="text-small text-base-dark">🥉 Básico — Acceso a sala y zona de pesas</p>
+          <p className="text-small text-base-dark">🥈 Premium — Sala + zonas especializadas</p>
+          <p className="text-small text-base-dark">🥇 VIP — Acceso total + servicios incluidos</p>
+          <p className="text-small text-base-dark">¿Te enviamos precios y condiciones? 📲</p>
+        </div>
+      )},
+    ],
+    [Sector.SALUD]: [
+      { side: 'right', content: 'Hola, quisiera información sobre sus tratamientos para control de glucosa' },
+      { side: 'left',  content: `¡Hola! 🩺 En ${businessName} contamos con programas de control metabólico. ¿Es para un diagnóstico previo o control preventivo?` },
+      { side: 'right', content: 'Es para control preventivo' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">🩺 Programa de Control Preventivo:</p>
+          <p className="text-small text-base-dark">📋 Evaluación inicial completa</p>
+          <p className="text-small text-base-dark">🧪 Análisis de laboratorio incluido</p>
+          <p className="text-small text-base-dark">📊 Seguimiento personalizado mensual</p>
+          <p className="text-small text-base-dark">¿Te gustaría que un especialista te contacte? 📲</p>
+        </div>
+      )},
+    ],
+    [Sector.BIENESTAR]: [
+      { side: 'right', content: 'Hola, ¿qué servicios tienen para el manejo del estrés?' },
+      { side: 'left',  content: `¡Hola! 🌿 En ${businessName} tenemos masajes relajantes, aromaterapia, meditación guiada y reflexología. ¿Sobre cuál te gustaría más información?` },
+      { side: 'right', content: 'Me interesa la aromaterapia' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">🌿 Sesión de Aromaterapia en {businessName}:</p>
+          <p className="text-small text-base-dark">⏱️ 60 min · Aceites esenciales 100% naturales</p>
+          <p className="text-small text-base-dark">🎯 Reduce estrés, ansiedad y tensión muscular</p>
+          <p className="text-small text-base-dark">✨ Incluye evaluación aromática personalizada</p>
+          <p className="text-small text-base-dark">¿Te enviamos precios y disponibilidad? 📲</p>
+        </div>
+      )},
+    ],
+    [Sector.BELLEZA]: [
+      { side: 'right', content: 'Hola, ¿qué tratamientos tienen para cabello dañado por decoloración?' },
+      { side: 'left',  content: `¡Hola! ✂️ En ${businessName} tenemos tratamientos reconstructivos especializados. ¿Quieres que te cuente sobre nuestra línea de recuperación capilar?` },
+      { side: 'right', content: 'Sí, me interesa' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">✂️ Línea de Recuperación Capilar:</p>
+          <p className="text-small text-base-dark">💆 Tratamiento de keratina y proteínas</p>
+          <p className="text-small text-base-dark">✨ Hidratación profunda con aceites naturales</p>
+          <p className="text-small text-base-dark">🛍️ También disponible para uso en casa</p>
+          <p className="text-small text-base-dark">¿Te gustaría conocer precios? 📲</p>
+        </div>
+      )},
+    ],
+  }
+
+  const messages = managesAppointments
+    ? appointmentMessages
+    : (alternativeMessages[sector] ?? appointmentMessages)
 
   useEffect(() => {
     if (!chatVisible) return
@@ -469,10 +534,10 @@ interface MetricItem {
   border: string
 }
 
-function MetricCard({ metric, delayMs }: { metric: MetricItem; delayMs: number }) {
+function MetricCard({ metric, delayMs, className = '' }: { metric: MetricItem; delayMs: number; className?: string }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <RevealCard delayMs={delayMs} className="h-full">
+    <RevealCard delayMs={delayMs} className={`h-full ${className}`}>
       <div
         className={`h-full bg-white rounded-2xl shadow-sm border border-primary-100 border-l-[5px] ${metric.border} transition-all duration-300 flex flex-col p-6 cursor-default`}
         style={{ transform: hovered ? 'translateY(-5px)' : 'translateY(0)', boxShadow: hovered ? '0 10px 30px rgba(0,0,0,0.12)' : '' }}
@@ -518,6 +583,21 @@ interface PainItem {
   impactText: string
   border: string
 }
+
+// ── Terminología por sector ──
+function getSectorTerms(sector: Sector) {
+  switch (sector) {
+    case Sector.FITNESS:
+      return { cliente: 'miembro', clientes: 'miembros', cita: 'clase', citas: 'clases' }
+    case Sector.SALUD:
+      return { cliente: 'paciente', clientes: 'pacientes', cita: 'cita', citas: 'citas' }
+    case Sector.BIENESTAR:
+      return { cliente: 'alumno', clientes: 'alumnos', cita: 'clase', citas: 'clases' }
+    default:
+      return { cliente: 'cliente', clientes: 'clientes', cita: 'cita', citas: 'citas' }
+  }
+}
+function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
 
 function PainCard({ pain, delayMs }: { pain: PainItem; delayMs: number }) {
   const [hovered, setHovered] = useState(false)
@@ -566,6 +646,7 @@ function PainCard({ pain, delayMs }: { pain: PainItem; delayMs: number }) {
 
 function buildPainCards(data: DiagnosticoResultados): PainItem[] {
   const cards: PainItem[] = []
+  const t = getSectorTerms(data.sector)
 
   // ── BASE 1: Respuestas Lentas (todos los sectores) ──
   cards.push({
@@ -576,7 +657,7 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     bullets: [
       `${data.consultasSinRespuesta} consultas al mes llegan y nunca reciben respuesta`,
       `Cada una representa ~${formatCurrency(data.ticketPromedio)} de venta potencial`,
-      'Tus competidores que responden en menos de 5 minutos se quedan con esos clientes',
+      `Tus competidores que responden en menos de 5 minutos se quedan con esos ${t.clientes}`,
     ],
     impact: data.ingresosPerdidosRespuestaLenta,
     impactText: 'en oportunidades perdidas por responder tarde',
@@ -588,7 +669,7 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     key: 'hours', icon: 'solar:moon-stars-linear', iconColor: '#FBBF24', iconBg: '#FEF3C7',
     animation: 'lunaHide', animDuration: '1.2s', animIterations: '1',
     title: 'Horario Limitado', subtitle: `Solo ${data.horasAtencion} de 24 horas cubiertas`,
-    explain: `El ${data.porcentajeConsultasFueraHorario}% de tus consultas llega cuando estás cerrado. Tus clientes no duermen cuando tú duermes.`,
+    explain: `El ${data.porcentajeConsultasFueraHorario}% de tus consultas llega cuando estás cerrado. Tus ${t.clientes} no duermen cuando tú duermes.`,
     bullets: [
       `${24 - data.horasAtencion} horas al día sin atención`,
       `${data.consultasFueraHorario} consultas/mes fuera de horario`,
@@ -599,19 +680,19 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     border: 'border-l-primary-400',
   })
 
-  // ── BASE 3: Clientes que Se Van / Churn (todos los sectores) ──
+  // ── BASE 3: Churn (todos los sectores) ──
   cards.push({
     key: 'churn', icon: 'solar:user-cross-linear', iconColor: '#34D399', iconBg: '#D6F6EB',
     animation: 'manoAway', animDuration: '1.5s', animIterations: '1',
-    title: 'Clientes que Se Van', subtitle: `${data.porcentajeChurn}% de churn mensual`,
-    explain: 'Retener un cliente cuesta 7 veces menos que conseguir uno nuevo. Sin seguimiento automatizado, se van en silencio.',
+    title: `${cap(t.clientes)} que Se Van`, subtitle: `${data.porcentajeChurn}% de churn mensual`,
+    explain: `Retener un ${t.cliente} cuesta 7 veces menos que conseguir uno nuevo. Sin seguimiento automatizado, se van en silencio.`,
     bullets: [
-      `${data.clientesPerdidosMes} clientes al mes no vuelven después de su última cita`,
-      `Valor de vida promedio del cliente: ~${formatCurrency(data.valorVidaCliente)}`,
+      `${data.clientesPerdidosMes} ${t.clientes} al mes no vuelven después de su última ${t.cita}`,
+      `Valor de vida promedio del ${t.cliente}: ~${formatCurrency(data.valorVidaCliente)}`,
       'Sin un sistema de retención, pierdes esa relación para siempre',
     ],
     impact: data.ingresosPerdidosChurn,
-    impactText: 'en ingresos futuros que se van con cada cliente perdido',
+    impactText: `en ingresos futuros que se van con cada ${t.cliente} perdido`,
     border: 'border-l-error',
   })
 
@@ -631,37 +712,39 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     border: 'border-l-secondary-400',
   })
 
-  // ── BASE 5: Baja Adquisición de Nuevos Clientes (todos los sectores) ──
+  // ── BASE 5: Baja Adquisición (todos los sectores) ──
   cards.push({
     key: 'acquisition', icon: 'solar:chart-2-linear', iconColor: '#34D399', iconBg: '#D6F6EB',
     animation: 'calendarioFloat', animDuration: '1.0s', animIterations: '2',
-    title: 'Captación Lenta de Nuevos Clientes', subtitle: `${data.clientesNuevosMes} nuevos clientes al mes`,
-    explain: 'Responder rápido es la clave para captar clientes nuevos. Los negocios que responden en menos de 5 minutos captan un 35% más de clientes.',
+    title: `Captación Lenta de Nuevos ${cap(t.clientes)}`, subtitle: `${data.clientesNuevosMes} nuevos ${t.clientes} al mes`,
+    explain: `Responder rápido es la clave para captar ${t.clientes} nuevos. Los negocios que responden en menos de 5 minutos captan un 35% más de ${t.clientes}.`,
     bullets: [
       `Respondes en ${data.tiempoRespuestaPromedio} promedio — tus competidores responden en <5 min`,
-      'Los negocios que responden más rápido captan el 35% más de clientes nuevos',
-      `Podrías captar ${data.clientesAdicionalesMes} clientes adicionales al mes`,
+      `Los negocios que responden más rápido captan el 35% más de ${t.clientes} nuevos`,
+      `Podrías captar ${data.clientesAdicionalesMes} ${t.clientes} adicionales al mes`,
     ],
     impact: data.gananciaAdquisicionMensual,
-    impactText: 'en ingresos de nuevos clientes que tus competidores te están quitando',
+    impactText: `en ingresos de nuevos ${t.clientes} que tus competidores te están quitando`,
     border: 'border-l-secondary-500',
   })
 
-  // ── SECTOR: Citas Vacías (Belleza, Salud, Bienestar, Fitness) ──
+  // ── SECTOR: Citas/Clases Vacías (solo si el usuario maneja citas/clases) ──
+  if (data.porcentajeNoShow > 0) {
   cards.push({
     key: 'noshow', icon: 'solar:calendar-linear', iconColor: '#60A5FA', iconBg: '#DFEDFE',
     animation: 'calendarioFlip', animDuration: '0.8s', animIterations: '1',
-    title: 'Citas Vacías', subtitle: `${data.porcentajeNoShow}% de no-show mensual`,
-    explain: 'Cada cita vacía es un espacio en tu agenda que no genera ingreso pero sí tiene un costo operativo.',
+      title: `${cap(t.citas)} Vacías`, subtitle: `${data.porcentajeNoShow}% de no-show mensual`,
+      explain: `Cada ${t.cita} vacía es un espacio en tu agenda que no genera ingreso pero sí tiene un costo operativo.`,
     bullets: [
-      `${data.citasPerdidasMes} citas perdidas al mes`,
+        `${data.citasPerdidasMes} ${t.citas} perdidas al mes`,
       `Ticket promedio por servicio: ${formatCurrency(data.ticketPromedio)}`,
-      'Sin recordatorios automáticos, los clientes simplemente olvidan',
+        `Sin recordatorios automáticos, los ${t.clientes} simplemente olvidan`,
     ],
     impact: data.ingresosPerdidosNoShow,
-    impactText: 'en sillas vacías que pudieron generar ingreso',
+      impactText: `en ${t.citas} vacías que pudieron generar ingreso`,
     border: 'border-l-warning',
   })
+  }
 
   // ── SECTOR SALUD: Adherencia Baja ──
   if (data.sector === Sector.SALUD && data.gananciaAdherenciaMensual > 0) {
@@ -687,10 +770,10 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
       key: 'upsells', icon: 'solar:bag-smile-linear', iconColor: '#FAD19E', iconBg: '#FEF3C7',
       animation: 'manoAdios', animDuration: '1.0s', animIterations: '2',
       title: 'Oportunidades de Venta Cruzada Perdidas', subtitle: `${formatCurrency(data.ingresosUpsellsActual)} en servicios adicionales actuales`,
-      explain: 'Linda puede sugerir servicios complementarios en el momento exacto. Los clientes que reciben recomendaciones personalizadas gastan un 31% más.',
+      explain: `Linda puede sugerir servicios complementarios en el momento exacto. Los ${t.clientes} que reciben recomendaciones personalizadas gastan un 31% más.`,
       bullets: [
         'Linda sugiere servicios complementarios en el momento exacto',
-        'Los clientes con recomendaciones personalizadas gastan 31% más',
+        `Los ${t.clientes} con recomendaciones personalizadas gastan 31% más`,
         `Podrías generar ${formatCurrency(data.gananciaUpsellsMensual)} adicionales en ventas cruzadas`,
       ],
       impact: data.gananciaUpsellsMensual,
@@ -755,6 +838,7 @@ export function ResultsDashboardPage() {
   }, [state, answersForRendering])
 
   const data = fullResults.diagnostico
+  const t = getSectorTerms(data.sector)
   const serviceType = {
     [Sector.BELLEZA]: 'corte y styling',
     [Sector.SALUD]: 'consulta de valoración',
@@ -854,6 +938,14 @@ export function ResultsDashboardPage() {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }, [])
 
+  // Scrollbar degradé — solo activa en esta página
+  useEffect(() => {
+    document.documentElement.classList.add('results-page')
+    return () => {
+      document.documentElement.classList.remove('results-page')
+    }
+  }, [])
+
   return (
     <FunnelLayout showHeader={false}>
       {/* ── SHARE MODAL (aparece 3s después de cargar) ── */}
@@ -861,6 +953,7 @@ export function ResultsDashboardPage() {
         businessName={data.nombreNegocio}
         roi={data.escenarioRealista.roi}
         potentialMonthly={data.escenarioRealista.mes4_6}
+        totalPerdidaMensual={data.totalPerdidaMensual}
         formatCurrency={formatCurrency}
         shareUrl={shareUrl ?? undefined}
       />
@@ -944,13 +1037,13 @@ export function ResultsDashboardPage() {
           <p className="text-body text-white/70 text-center" style={{ marginBottom: '48px' }}>
             Así está tu negocio HOY. Estos son los números reales que revelaron tus respuestas:
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px] mx-auto">
-            {[
+          {(() => {
+            const radiografiaCards: MetricItem[] = [
               {
                 icon: 'solar:alarm-linear', iconColor: '#F87171', iconBg: '#FEE2E2', iconClass: 'icono-alarma',
                 animation: 'alarmaRing', animDuration: '0.8s',
                 title: 'TIEMPO DE RESPUESTA', value: data.tiempoRespuestaPromedio,
-                description: 'Tiempo promedio que tardas en dar la primera respuesta a un cliente que te contacta.',
+                description: `Tiempo promedio que tardas en dar la primera respuesta a un ${t.cliente} que te contacta.`,
                 badge: 'Zona crítica de pérdida', badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
                 badgeIcon: 'solar:danger-triangle-linear', badgeIconColor: '#B91C1C', border: 'border-l-error',
               },
@@ -962,20 +1055,20 @@ export function ResultsDashboardPage() {
                 badge: `${24 - data.horasAtencion} horas desatendidas`, badgeClass: 'bg-[#FEF3C7] text-[#B45309]',
                 badgeIcon: 'solar:clock-circle-linear', badgeIconColor: '#B45309', border: 'border-l-warning',
               },
-              {
+              ...(data.porcentajeNoShow > 0 ? [{
                 icon: 'solar:calendar-linear', iconColor: '#60A5FA', iconBg: '#DFEDFE', iconClass: 'icono-calendario',
                 animation: 'calendarioFloat', animDuration: '0.8s',
                 title: 'TASA DE NO-SHOW', value: `${data.porcentajeNoShow}%`,
-                description: 'Porcentaje de citas agendadas donde el cliente no se presenta. Espacios vacíos en tu agenda.',
-                badge: `${data.citasPerdidasMes} citas perdidas/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
+                description: `Porcentaje de ${t.citas} agendadas donde el ${t.cliente} no se presenta. Espacios vacíos en tu agenda.`,
+                badge: `${data.citasPerdidasMes} ${t.citas} perdidas/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
                 badgeIcon: 'solar:calendar-minimalistic-linear', badgeIconColor: '#B91C1C', border: 'border-l-error',
-              },
+              }] : []),
               {
                 icon: 'solar:user-cross-linear', iconColor: '#34D399', iconBg: '#D6F6EB', iconClass: 'icono-mano',
                 animation: 'manoAdios', animDuration: '0.8s',
                 title: 'CHURN MENSUAL', value: `${data.porcentajeChurn}%`,
-                description: 'Clientes que no vuelven después de su última visita. Pierdes clientes cada mes sin seguimiento.',
-                badge: `${data.clientesPerdidosMes} clientes perdidos/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
+                description: `${cap(t.clientes)} que no vuelven después de su última visita. Pierdes ${t.clientes} cada mes sin seguimiento.`,
+                badge: `${data.clientesPerdidosMes} ${t.clientes} perdidos/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
                 badgeIcon: 'solar:user-minus-linear', badgeIconColor: '#B91C1C', border: 'border-l-error',
               },
               {
@@ -990,14 +1083,37 @@ export function ResultsDashboardPage() {
                 icon: 'solar:chat-round-dots-linear', iconColor: '#60A5FA', iconBg: '#DFEDFE', iconClass: 'icono-calendario',
                 animation: 'calendarioFloat', animDuration: '1.0s',
                 title: 'VOLUMEN DE CONVERSACIONES', value: `${data.conversacionesMensuales}/mes`,
-                description: 'Total de interacciones con clientes cada mes. Cada una es una oportunidad de venta.',
+                description: `Total de interacciones con ${t.clientes} cada mes. Cada una es una oportunidad de venta.`,
                 badge: `${data.tasaDeflexion}% son preguntas repetitivas`, badgeClass: 'bg-[#DFEDFE] text-[#1D4ED8]',
                 badgeIcon: 'solar:bolt-linear', badgeIconColor: '#1D4ED8', border: 'border-l-primary-400',
               },
-            ].map((metric, index) => (
-              <MetricCard key={metric.title} metric={metric as MetricItem} delayMs={(index + 1) * 100} />
-            ))}
-          </div>
+            ]
+            const isOddTotal = radiografiaCards.length % 2 !== 0
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px] mx-auto">
+                {radiografiaCards.map((metric, index) => {
+                  const isLastAlone = isOddTotal && index === radiografiaCards.length - 1
+                  if (isLastAlone) {
+                    return (
+                      <div
+                        key={metric.title}
+                        style={{ gridColumn: '1 / -1', maxWidth: '414px', width: '100%', margin: '0 auto' }}
+                      >
+                        <MetricCard metric={metric} delayMs={(index + 1) * 100} />
+                      </div>
+                    )
+                  }
+                  return (
+                    <MetricCard
+                      key={metric.title}
+                      metric={metric}
+                      delayMs={(index + 1) * 100}
+                    />
+                  )
+                })}
+              </div>
+            )
+          })()}
         </section>
 
         <section className="py-[100px] px-6 md:px-12">
@@ -1031,7 +1147,7 @@ export function ResultsDashboardPage() {
           </p>
           <div className="max-w-3xl mx-auto mt-10 text-left rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.93)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', padding: '60px' }}>
             <p className="text-body text-base-dark font-bold text-center mb-6">Así funciona Linda IA en tiempo real:</p>
-            <ChatSimulation serviceType={serviceType} businessName={data.nombreNegocio} sector={data.sector} />
+            <ChatSimulation serviceType={serviceType} businessName={data.nombreNegocio} sector={data.sector} managesAppointments={data.porcentajeNoShow > 0} />
             <p className="text-small text-base-dark/60 mt-6">Tiempo de respuesta: 0 segundos · Disponible 24/7</p>
           </div>
           </div>

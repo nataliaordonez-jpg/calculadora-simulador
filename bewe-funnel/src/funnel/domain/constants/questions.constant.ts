@@ -48,7 +48,7 @@ export const QUESTIONS: IQuestion[] = [
     text: '¿Cuántas horas al día dedicas a atender clientes?',
     helpText: 'Las horas que no cubres son la oportunidad más clara de Linda. Con este dato calculamos cuántas consultas y ventas ocurren en ese tiempo sin atención y que Linda puede capturar de inmediato.',
     impactLevel: 'medio',
-    isDynamic: false,
+    isDynamic: true,
     category: 'calculator',
     options: [
       { id: 'p6_opt1', label: 'Menos de 8 horas', value: 'range_1', numericValue: 8 },
@@ -56,6 +56,35 @@ export const QUESTIONS: IQuestion[] = [
       { id: 'p6_opt3', label: '12-16 horas', value: 'range_3', numericValue: 14 },
       { id: 'p6_opt4', label: '24 horas (ya tengo atención completa)', value: 'range_4', numericValue: 24 },
     ],
+    dynamicBySector: {
+      [Sector.SALUD]: {
+        text: '¿Cuántas horas al día dedicas a atender pacientes?',
+        options: [
+          { id: 'p6_opt1', label: 'Menos de 8 horas', value: 'range_1', numericValue: 8 },
+          { id: 'p6_opt2', label: '8-12 horas', value: 'range_2', numericValue: 10 },
+          { id: 'p6_opt3', label: '12-16 horas', value: 'range_3', numericValue: 14 },
+          { id: 'p6_opt4', label: '24 horas (ya tengo atención completa)', value: 'range_4', numericValue: 24 },
+        ],
+      },
+      [Sector.FITNESS]: {
+        text: '¿Cuántas horas al día dedicas a atender miembros?',
+        options: [
+          { id: 'p6_opt1', label: 'Menos de 8 horas', value: 'range_1', numericValue: 8 },
+          { id: 'p6_opt2', label: '8-12 horas', value: 'range_2', numericValue: 10 },
+          { id: 'p6_opt3', label: '12-16 horas', value: 'range_3', numericValue: 14 },
+          { id: 'p6_opt4', label: '24 horas (ya tengo atención completa)', value: 'range_4', numericValue: 24 },
+        ],
+      },
+      [Sector.BIENESTAR]: {
+        text: '¿Cuántas horas al día dedicas a atender alumnos?',
+        options: [
+          { id: 'p6_opt1', label: 'Menos de 8 horas', value: 'range_1', numericValue: 8 },
+          { id: 'p6_opt2', label: '8-12 horas', value: 'range_2', numericValue: 10 },
+          { id: 'p6_opt3', label: '12-16 horas', value: 'range_3', numericValue: 14 },
+          { id: 'p6_opt4', label: '24 horas (ya tengo atención completa)', value: 'range_4', numericValue: 24 },
+        ],
+      },
+    },
   },
   // ─── P4: Tiempo de Primera Respuesta (antes p4) ───
   {
@@ -82,7 +111,7 @@ export const QUESTIONS: IQuestion[] = [
     text: '¿Cuántas conversaciones o mensajes manejas al mes con clientes?',
     helpText: 'Es el dato clave del pilar de ahorro. Con este número calculamos cuántas horas libera Linda al resolver consultas repetitivas y cuántas ventas adicionales genera al no dejar ningún chat sin respuesta.',
     impactLevel: 'maximo',
-    isDynamic: false,
+    isDynamic: true,
     category: 'calculator',
     options: [
       { id: 'p11_opt1', label: '0 - 100 conversaciones', value: 'range_1', numericValue: 50 },
@@ -91,6 +120,38 @@ export const QUESTIONS: IQuestion[] = [
       { id: 'p11_opt4', label: '1,000 - 2,500 conversaciones', value: 'range_4', numericValue: 1750 },
       { id: 'p11_opt5', label: 'Más de 2,500 conversaciones', value: 'range_5', numericValue: 3750 },
     ],
+    dynamicBySector: {
+      [Sector.SALUD]: {
+        text: '¿Cuántas conversaciones o mensajes manejas al mes con pacientes?',
+        options: [
+          { id: 'p11_opt1', label: '0 - 100 conversaciones', value: 'range_1', numericValue: 50 },
+          { id: 'p11_opt2', label: '100 - 500 conversaciones', value: 'range_2', numericValue: 300 },
+          { id: 'p11_opt3', label: '500 - 1,000 conversaciones', value: 'range_3', numericValue: 750 },
+          { id: 'p11_opt4', label: '1,000 - 2,500 conversaciones', value: 'range_4', numericValue: 1750 },
+          { id: 'p11_opt5', label: 'Más de 2,500 conversaciones', value: 'range_5', numericValue: 3750 },
+        ],
+      },
+      [Sector.FITNESS]: {
+        text: '¿Cuántas conversaciones o mensajes manejas al mes con miembros?',
+        options: [
+          { id: 'p11_opt1', label: '0 - 100 conversaciones', value: 'range_1', numericValue: 50 },
+          { id: 'p11_opt2', label: '100 - 500 conversaciones', value: 'range_2', numericValue: 300 },
+          { id: 'p11_opt3', label: '500 - 1,000 conversaciones', value: 'range_3', numericValue: 750 },
+          { id: 'p11_opt4', label: '1,000 - 2,500 conversaciones', value: 'range_4', numericValue: 1750 },
+          { id: 'p11_opt5', label: 'Más de 2,500 conversaciones', value: 'range_5', numericValue: 3750 },
+        ],
+      },
+      [Sector.BIENESTAR]: {
+        text: '¿Cuántas conversaciones o mensajes manejas al mes con alumnos?',
+        options: [
+          { id: 'p11_opt1', label: '0 - 100 conversaciones', value: 'range_1', numericValue: 50 },
+          { id: 'p11_opt2', label: '100 - 500 conversaciones', value: 'range_2', numericValue: 300 },
+          { id: 'p11_opt3', label: '500 - 1,000 conversaciones', value: 'range_3', numericValue: 750 },
+          { id: 'p11_opt4', label: '1,000 - 2,500 conversaciones', value: 'range_4', numericValue: 1750 },
+          { id: 'p11_opt5', label: 'Más de 2,500 conversaciones', value: 'range_5', numericValue: 3750 },
+        ],
+      },
+    },
   },
   // ─── P6: % Ventas/Oportunidades Perdidas (antes p3) ───
   {
@@ -133,6 +194,17 @@ export const QUESTIONS: IQuestion[] = [
           { id: 'p5_opt2', label: 'Ocasional (5-15%)', value: 'range_2', numericValue: 0.10 },
           { id: 'p5_opt3', label: 'Frecuente (15-30%)', value: 'range_3', numericValue: 0.20 },
           { id: 'p5_opt4', label: 'Muy frecuente (más del 30%)', value: 'range_4', numericValue: 0.37 },
+          { id: 'p5_opt5', label: 'No manejo citas', value: 'none', numericValue: 0 },
+        ],
+      },
+      [Sector.FITNESS]: {
+        text: '¿Qué tan común es que un miembro no se presente a su clase?',
+        options: [
+          { id: 'p5_opt1', label: 'Muy raro (menos del 5%)', value: 'range_1', numericValue: 0.02 },
+          { id: 'p5_opt2', label: 'Ocasional (5-15%)', value: 'range_2', numericValue: 0.10 },
+          { id: 'p5_opt3', label: 'Frecuente (15-30%)', value: 'range_3', numericValue: 0.20 },
+          { id: 'p5_opt4', label: 'Muy frecuente (más del 30%)', value: 'range_4', numericValue: 0.37 },
+          { id: 'p5_opt5', label: 'No manejo clases', value: 'none', numericValue: 0 },
         ],
       },
       [Sector.BIENESTAR]: {
@@ -142,6 +214,7 @@ export const QUESTIONS: IQuestion[] = [
           { id: 'p5_opt2', label: 'Ocasional (5-15%)', value: 'range_2', numericValue: 0.10 },
           { id: 'p5_opt3', label: 'Frecuente (15-30%)', value: 'range_3', numericValue: 0.20 },
           { id: 'p5_opt4', label: 'Muy frecuente (más del 30%)', value: 'range_4', numericValue: 0.37 },
+          { id: 'p5_opt5', label: 'No manejo clases', value: 'none', numericValue: 0 },
         ],
       },
     },
