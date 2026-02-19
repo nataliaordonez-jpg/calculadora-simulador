@@ -27,6 +27,11 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
     return () => clearTimeout(timer)
   }, [])
 
+  const closeModal = useCallback(() => {
+    setIsVisible(false)
+    setTimeout(() => setShowFloatingBtn(true), 300)
+  }, [])
+
   // Tecla ESC
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -34,7 +39,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [isVisible])
+  }, [isVisible, closeModal])
 
   // Bloquear scroll del body
   useEffect(() => {
@@ -47,11 +52,6 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
     setToast({ visible: true, message })
     setTimeout(() => setToast({ visible: false, message: '' }), 3000)
   }
-
-  const closeModal = useCallback(() => {
-    setIsVisible(false)
-    setTimeout(() => setShowFloatingBtn(true), 300)
-  }, [])
 
   const openModal = () => {
     setIsVisible(true)

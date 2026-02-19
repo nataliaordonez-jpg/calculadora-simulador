@@ -12,11 +12,10 @@ const adapter = new SupabaseDiagnosticAdapter()
 export function SharedResultsPage() {
   const { shareId } = useParams<{ shareId: string }>()
   const { dispatch } = useFunnelContext()
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(shareId ? 'loading' : 'error')
 
   useEffect(() => {
     if (!shareId) {
-      setStatus('error')
       return
     }
 

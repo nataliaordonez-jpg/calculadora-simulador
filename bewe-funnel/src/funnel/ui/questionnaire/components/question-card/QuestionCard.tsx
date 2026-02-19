@@ -32,8 +32,6 @@ export function QuestionCard({
   sector,
   selectedOptionId,
   onAnswer,
-  questionIndex,
-  totalQuestions,
 }: QuestionCardProps) {
   const dynamicData = question.isDynamic && question.dynamicBySector?.[sector]
   const questionText = dynamicData ? dynamicData.text : question.text

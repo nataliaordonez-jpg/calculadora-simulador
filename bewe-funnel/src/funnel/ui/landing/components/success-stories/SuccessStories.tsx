@@ -1,4 +1,4 @@
-import { Card, Chip } from '@beweco/aurora-ui'
+import { Card } from '@beweco/aurora-ui'
 
 interface Story {
   initial: string
