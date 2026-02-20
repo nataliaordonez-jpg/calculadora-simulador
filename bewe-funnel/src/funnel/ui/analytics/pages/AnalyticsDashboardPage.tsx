@@ -646,7 +646,7 @@ export function AnalyticsDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                   <XAxis dataKey="variant" tick={{ fontSize: 12, fill: '#94A3B8' }} />
                   <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} unit="%" />
-                  <Tooltip formatter={(val: number) => [`${val}%`, 'Conversión']} />
+                  <Tooltip formatter={(val: any) => [`${val}%`, 'Conversión']} />
                   <Bar dataKey="conversion" fill="#10B981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
