@@ -3,8 +3,6 @@ import { Button, Card, IconComponent } from '@beweco/aurora-ui'
 import { FunnelLayout } from '../../_shared/components/funnel-layout/FunnelLayout'
 import { ShareModal } from '../components/ShareModal'
 import { useFunnelContext } from '../../_shared/context/funnel-context'
-import { useFunnelNavigation } from '../../_shared/hooks/use-funnel-navigation'
-import { FunnelStep } from '@funnel/domain/enums/funnel-step.enum'
 import { runDiagnostic } from '@funnel/application/run-diagnostic.usecase'
 import { QUESTIONS } from '@funnel/domain/constants/questions.constant'
 import { Sector } from '@funnel/domain/enums/sector.enum'
@@ -154,48 +152,6 @@ function getScenarioAutomation(active: 'conservador' | 'realista' | 'optimista')
   if (active === 'conservador') return 60
   if (active === 'optimista') return 85
   return 70
-}
-
-function getTestimonials(sector: Sector, facturacionMensual: number) {
-  const monthlyText = `${formatCurrency(facturacionMensual)}/mes (similar a la tuya)`
-  const base = [
-    {
-      sector: Sector.SALUD,
-      quote: 'En 2 meses redujimos el no-show del 28% al 9%. Son 34 citas más al mes que antes se perdían.',
-      author: 'Ana Martínez',
-      business: 'Clínica Dental San Ángel',
-      monthly: monthlyText,
-    },
-    {
-      sector: Sector.FITNESS,
-      quote: 'Linda responde el 80% de las consultas sola. Mi recepcionista ahora se enfoca en cerrar ventas.',
-      author: 'Roberto Gómez',
-      business: 'Gimnasio FitZone',
-      monthly: monthlyText,
-    },
-    {
-      sector: Sector.BIENESTAR,
-      quote: 'El primer mes capturamos $4,100 en ventas que antes se perdían por responder fuera de horario.',
-      author: 'Laura Pérez',
-      business: 'Spa Bienestar Total',
-      monthly: monthlyText,
-    },
-    {
-      sector: Sector.BELLEZA,
-      quote: 'Las respuestas automáticas nos devolvieron ventas que se perdían por tardanza y agenda sin seguimiento.',
-      author: 'Mariana López',
-      business: 'Studio Glow Beauty',
-      monthly: monthlyText,
-    },
-  ]
-
-  const prioritized = [...base].sort((a, b) => {
-    if (a.sector === sector && b.sector !== sector) return -1
-    if (b.sector === sector && a.sector !== sector) return 1
-    return 0
-  })
-
-  return prioritized.slice(0, 3)
 }
 
 function buildDiagnosticsData(
@@ -380,7 +336,7 @@ function RevealCard({
   )
 }
 
-function ChatSimulation({ serviceType, businessName, sector }: { serviceType: string; businessName: string; sector: Sector }) {
+function ChatSimulation({ serviceType, businessName, sector, managesAppointments = true }: { serviceType: string; businessName: string; sector: Sector; managesAppointments?: boolean }) {
   const [chatRef, chatVisible] = useInView<HTMLDivElement>(0.3)
   const [visibleCount, setVisibleCount] = useState(0)
   const [showTyping, setShowTyping] = useState(false)
@@ -398,6 +354,7 @@ function ChatSimulation({ serviceType, businessName, sector }: { serviceType: st
     [Sector.BIENESTAR]: '💆',
   }[sector] ?? '📋'
 
+  // ── Conversación CON citas / clases ──
   const confirmationContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <p className="text-small font-semibold text-base-dark">¡Listo! ✅ Tu cita está confirmada:</p>
@@ -407,12 +364,76 @@ function ChatSimulation({ serviceType, businessName, sector }: { serviceType: st
     </div>
   )
 
-  const messages: { side: string; content: ReactNode }[] = [
+  const appointmentMessages: { side: string; content: ReactNode }[] = [
     { side: 'right', content: `Hola, quisiera saber si tienen disponibilidad para ${serviceType} mañana a las 3pm` },
     { side: 'left',  content: `¡Hola! Claro que sí. Tengo disponibilidad mañana a las 3:00 PM para ${serviceType}. ¿Te gustaría que te lo agende?` },
     { side: 'right', content: 'Perfecto, sí por favor' },
     { side: 'left',  content: confirmationContent },
   ]
+
+  // ── Conversación SIN citas / clases — alternativa por nicho ──
+  const alternativeMessages: Record<Sector, { side: string; content: ReactNode }[]> = {
+    [Sector.FITNESS]: [
+      { side: 'right', content: 'Hola, ¿cuánto cuesta la membresía mensual y qué incluye?' },
+      { side: 'left',  content: `¡Hola! 💪 En ${businessName} tenemos planes para todos los objetivos. ¿Te cuento qué incluye cada uno?` },
+      { side: 'right', content: 'Sí, me interesa el plan completo' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">💪 Planes disponibles en {businessName}:</p>
+          <p className="text-small text-base-dark">🥉 Básico — Acceso a sala y zona de pesas</p>
+          <p className="text-small text-base-dark">🥈 Premium — Sala + zonas especializadas</p>
+          <p className="text-small text-base-dark">🥇 VIP — Acceso total + servicios incluidos</p>
+          <p className="text-small text-base-dark">¿Te enviamos precios y condiciones? 📲</p>
+        </div>
+      )},
+    ],
+    [Sector.SALUD]: [
+      { side: 'right', content: 'Hola, quisiera información sobre sus tratamientos para control de glucosa' },
+      { side: 'left',  content: `¡Hola! 🩺 En ${businessName} contamos con programas de control metabólico. ¿Es para un diagnóstico previo o control preventivo?` },
+      { side: 'right', content: 'Es para control preventivo' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">🩺 Programa de Control Preventivo:</p>
+          <p className="text-small text-base-dark">📋 Evaluación inicial completa</p>
+          <p className="text-small text-base-dark">🧪 Análisis de laboratorio incluido</p>
+          <p className="text-small text-base-dark">📊 Seguimiento personalizado mensual</p>
+          <p className="text-small text-base-dark">¿Te gustaría que un especialista te contacte? 📲</p>
+        </div>
+      )},
+    ],
+    [Sector.BIENESTAR]: [
+      { side: 'right', content: 'Hola, ¿qué servicios tienen para el manejo del estrés?' },
+      { side: 'left',  content: `¡Hola! 🌿 En ${businessName} tenemos masajes relajantes, aromaterapia, meditación guiada y reflexología. ¿Sobre cuál te gustaría más información?` },
+      { side: 'right', content: 'Me interesa la aromaterapia' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">🌿 Sesión de Aromaterapia en {businessName}:</p>
+          <p className="text-small text-base-dark">⏱️ 60 min · Aceites esenciales 100% naturales</p>
+          <p className="text-small text-base-dark">🎯 Reduce estrés, ansiedad y tensión muscular</p>
+          <p className="text-small text-base-dark">✨ Incluye evaluación aromática personalizada</p>
+          <p className="text-small text-base-dark">¿Te enviamos precios y disponibilidad? 📲</p>
+        </div>
+      )},
+    ],
+    [Sector.BELLEZA]: [
+      { side: 'right', content: 'Hola, ¿qué tratamientos tienen para cabello dañado por decoloración?' },
+      { side: 'left',  content: `¡Hola! ✂️ En ${businessName} tenemos tratamientos reconstructivos especializados. ¿Quieres que te cuente sobre nuestra línea de recuperación capilar?` },
+      { side: 'right', content: 'Sí, me interesa' },
+      { side: 'left',  content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p className="text-small font-semibold text-base-dark">✂️ Línea de Recuperación Capilar:</p>
+          <p className="text-small text-base-dark">💆 Tratamiento de keratina y proteínas</p>
+          <p className="text-small text-base-dark">✨ Hidratación profunda con aceites naturales</p>
+          <p className="text-small text-base-dark">🛍️ También disponible para uso en casa</p>
+          <p className="text-small text-base-dark">¿Te gustaría conocer precios? 📲</p>
+        </div>
+      )},
+    ],
+  }
+
+  const messages = managesAppointments
+    ? appointmentMessages
+    : (alternativeMessages[sector] ?? appointmentMessages)
 
   useEffect(() => {
     if (!chatVisible) return
@@ -513,10 +534,10 @@ interface MetricItem {
   border: string
 }
 
-function MetricCard({ metric, delayMs }: { metric: MetricItem; delayMs: number }) {
+function MetricCard({ metric, delayMs, className = '' }: { metric: MetricItem; delayMs: number; className?: string }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <RevealCard delayMs={delayMs} className="h-full">
+    <RevealCard delayMs={delayMs} className={`h-full ${className}`}>
       <div
         className={`h-full bg-white rounded-2xl shadow-sm border border-primary-100 border-l-[5px] ${metric.border} transition-all duration-300 flex flex-col p-6 cursor-default`}
         style={{ transform: hovered ? 'translateY(-5px)' : 'translateY(0)', boxShadow: hovered ? '0 10px 30px rgba(0,0,0,0.12)' : '' }}
@@ -562,6 +583,21 @@ interface PainItem {
   impactText: string
   border: string
 }
+
+// ── Terminología por sector ──
+function getSectorTerms(sector: Sector) {
+  switch (sector) {
+    case Sector.FITNESS:
+      return { cliente: 'miembro', clientes: 'miembros', cita: 'clase', citas: 'clases' }
+    case Sector.SALUD:
+      return { cliente: 'paciente', clientes: 'pacientes', cita: 'cita', citas: 'citas' }
+    case Sector.BIENESTAR:
+      return { cliente: 'alumno', clientes: 'alumnos', cita: 'clase', citas: 'clases' }
+    default:
+      return { cliente: 'cliente', clientes: 'clientes', cita: 'cita', citas: 'citas' }
+  }
+}
+function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
 
 function PainCard({ pain, delayMs }: { pain: PainItem; delayMs: number }) {
   const [hovered, setHovered] = useState(false)
@@ -610,6 +646,7 @@ function PainCard({ pain, delayMs }: { pain: PainItem; delayMs: number }) {
 
 function buildPainCards(data: DiagnosticoResultados): PainItem[] {
   const cards: PainItem[] = []
+  const t = getSectorTerms(data.sector)
 
   // ── BASE 1: Respuestas Lentas (todos los sectores) ──
   cards.push({
@@ -620,7 +657,7 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     bullets: [
       `${data.consultasSinRespuesta} consultas al mes llegan y nunca reciben respuesta`,
       `Cada una representa ~${formatCurrency(data.ticketPromedio)} de venta potencial`,
-      'Tus competidores que responden en menos de 5 minutos se quedan con esos clientes',
+      `Tus competidores que responden en menos de 5 minutos se quedan con esos ${t.clientes}`,
     ],
     impact: data.ingresosPerdidosRespuestaLenta,
     impactText: 'en oportunidades perdidas por responder tarde',
@@ -632,7 +669,7 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     key: 'hours', icon: 'solar:moon-stars-linear', iconColor: '#FBBF24', iconBg: '#FEF3C7',
     animation: 'lunaHide', animDuration: '1.2s', animIterations: '1',
     title: 'Horario Limitado', subtitle: `Solo ${data.horasAtencion} de 24 horas cubiertas`,
-    explain: `El ${data.porcentajeConsultasFueraHorario}% de tus consultas llega cuando estás cerrado. Tus clientes no duermen cuando tú duermes.`,
+    explain: `El ${data.porcentajeConsultasFueraHorario}% de tus consultas llega cuando estás cerrado. Tus ${t.clientes} no duermen cuando tú duermes.`,
     bullets: [
       `${24 - data.horasAtencion} horas al día sin atención`,
       `${data.consultasFueraHorario} consultas/mes fuera de horario`,
@@ -643,19 +680,19 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     border: 'border-l-primary-400',
   })
 
-  // ── BASE 3: Clientes que Se Van / Churn (todos los sectores) ──
+  // ── BASE 3: Churn (todos los sectores) ──
   cards.push({
     key: 'churn', icon: 'solar:user-cross-linear', iconColor: '#34D399', iconBg: '#D6F6EB',
     animation: 'manoAway', animDuration: '1.5s', animIterations: '1',
-    title: 'Clientes que Se Van', subtitle: `${data.porcentajeChurn}% de churn mensual`,
-    explain: 'Retener un cliente cuesta 7 veces menos que conseguir uno nuevo. Sin seguimiento automatizado, se van en silencio.',
+    title: `${cap(t.clientes)} que Se Van`, subtitle: `${data.porcentajeChurn}% de churn mensual`,
+    explain: `Retener un ${t.cliente} cuesta 7 veces menos que conseguir uno nuevo. Sin seguimiento automatizado, se van en silencio.`,
     bullets: [
-      `${data.clientesPerdidosMes} clientes al mes no vuelven después de su última cita`,
-      `Valor de vida promedio del cliente: ~${formatCurrency(data.valorVidaCliente)}`,
+      `${data.clientesPerdidosMes} ${t.clientes} al mes no vuelven después de su última ${t.cita}`,
+      `Valor de vida promedio del ${t.cliente}: ~${formatCurrency(data.valorVidaCliente)}`,
       'Sin un sistema de retención, pierdes esa relación para siempre',
     ],
     impact: data.ingresosPerdidosChurn,
-    impactText: 'en ingresos futuros que se van con cada cliente perdido',
+    impactText: `en ingresos futuros que se van con cada ${t.cliente} perdido`,
     border: 'border-l-error',
   })
 
@@ -675,37 +712,39 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
     border: 'border-l-secondary-400',
   })
 
-  // ── BASE 5: Baja Adquisición de Nuevos Clientes (todos los sectores) ──
+  // ── BASE 5: Baja Adquisición (todos los sectores) ──
   cards.push({
     key: 'acquisition', icon: 'solar:chart-2-linear', iconColor: '#34D399', iconBg: '#D6F6EB',
     animation: 'calendarioFloat', animDuration: '1.0s', animIterations: '2',
-    title: 'Captación Lenta de Nuevos Clientes', subtitle: `${data.clientesNuevosMes} nuevos clientes al mes`,
-    explain: 'Responder rápido es la clave para captar clientes nuevos. Los negocios que responden en menos de 5 minutos captan un 35% más de clientes.',
+    title: `Captación Lenta de Nuevos ${cap(t.clientes)}`, subtitle: `${data.clientesNuevosMes} nuevos ${t.clientes} al mes`,
+    explain: `Responder rápido es la clave para captar ${t.clientes} nuevos. Los negocios que responden en menos de 5 minutos captan un 35% más de ${t.clientes}.`,
     bullets: [
       `Respondes en ${data.tiempoRespuestaPromedio} promedio — tus competidores responden en <5 min`,
-      'Los negocios que responden más rápido captan el 35% más de clientes nuevos',
-      `Podrías captar ${data.clientesAdicionalesMes} clientes adicionales al mes`,
+      `Los negocios que responden más rápido captan el 35% más de ${t.clientes} nuevos`,
+      `Podrías captar ${data.clientesAdicionalesMes} ${t.clientes} adicionales al mes`,
     ],
     impact: data.gananciaAdquisicionMensual,
-    impactText: 'en ingresos de nuevos clientes que tus competidores te están quitando',
+    impactText: `en ingresos de nuevos ${t.clientes} que tus competidores te están quitando`,
     border: 'border-l-secondary-500',
   })
 
-  // ── SECTOR: Citas Vacías (Belleza, Salud, Bienestar, Fitness) ──
+  // ── SECTOR: Citas/Clases Vacías (solo si el usuario maneja citas/clases) ──
+  if (data.porcentajeNoShow > 0) {
   cards.push({
     key: 'noshow', icon: 'solar:calendar-linear', iconColor: '#60A5FA', iconBg: '#DFEDFE',
     animation: 'calendarioFlip', animDuration: '0.8s', animIterations: '1',
-    title: 'Citas Vacías', subtitle: `${data.porcentajeNoShow}% de no-show mensual`,
-    explain: 'Cada cita vacía es un espacio en tu agenda que no genera ingreso pero sí tiene un costo operativo.',
+      title: `${cap(t.citas)} Vacías`, subtitle: `${data.porcentajeNoShow}% de no-show mensual`,
+      explain: `Cada ${t.cita} vacía es un espacio en tu agenda que no genera ingreso pero sí tiene un costo operativo.`,
     bullets: [
-      `${data.citasPerdidasMes} citas perdidas al mes`,
+        `${data.citasPerdidasMes} ${t.citas} perdidas al mes`,
       `Ticket promedio por servicio: ${formatCurrency(data.ticketPromedio)}`,
-      'Sin recordatorios automáticos, los clientes simplemente olvidan',
+        `Sin recordatorios automáticos, los ${t.clientes} simplemente olvidan`,
     ],
     impact: data.ingresosPerdidosNoShow,
-    impactText: 'en sillas vacías que pudieron generar ingreso',
+      impactText: `en ${t.citas} vacías que pudieron generar ingreso`,
     border: 'border-l-warning',
   })
+  }
 
   // ── SECTOR SALUD: Adherencia Baja ──
   if (data.sector === Sector.SALUD && data.gananciaAdherenciaMensual > 0) {
@@ -731,10 +770,10 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
       key: 'upsells', icon: 'solar:bag-smile-linear', iconColor: '#FAD19E', iconBg: '#FEF3C7',
       animation: 'manoAdios', animDuration: '1.0s', animIterations: '2',
       title: 'Oportunidades de Venta Cruzada Perdidas', subtitle: `${formatCurrency(data.ingresosUpsellsActual)} en servicios adicionales actuales`,
-      explain: 'Linda puede sugerir servicios complementarios en el momento exacto. Los clientes que reciben recomendaciones personalizadas gastan un 31% más.',
+      explain: `Linda puede sugerir servicios complementarios en el momento exacto. Los ${t.clientes} que reciben recomendaciones personalizadas gastan un 31% más.`,
       bullets: [
         'Linda sugiere servicios complementarios en el momento exacto',
-        'Los clientes con recomendaciones personalizadas gastan 31% más',
+        `Los ${t.clientes} con recomendaciones personalizadas gastan 31% más`,
         `Podrías generar ${formatCurrency(data.gananciaUpsellsMensual)} adicionales en ventas cruzadas`,
       ],
       impact: data.gananciaUpsellsMensual,
@@ -748,7 +787,6 @@ function buildPainCards(data: DiagnosticoResultados): PainItem[] {
 
 export function ResultsDashboardPage() {
   const { state, dispatch } = useFunnelContext()
-  const { goToStep } = useFunnelNavigation()
   const act2Ref = useRef<HTMLElement>(null)
   const act7Ref = useRef<HTMLElement>(null)
   const scenarioContentRef = useRef<HTMLDivElement>(null)
@@ -800,6 +838,7 @@ export function ResultsDashboardPage() {
   }, [state, answersForRendering])
 
   const data = fullResults.diagnostico
+  const t = getSectorTerms(data.sector)
   const serviceType = {
     [Sector.BELLEZA]: 'corte y styling',
     [Sector.SALUD]: 'consulta de valoración',
@@ -822,19 +861,11 @@ export function ResultsDashboardPage() {
       ? data.escenarioOptimista
       : data.escenarioRealista
   const automationRate = getScenarioAutomation(activeScenario)
-  const scenarioBars = {
-    before: data.totalPerdidaMensual,
-    after: activeScenarioData.mes4_6,
-  }
   const stage1Recovery = Math.round(activeScenarioData.mes1_3 * 0.5)
   const stage1NoShow   = Math.round(activeScenarioData.mes1_3 * 0.25)
   const stage1Savings  = Math.round(activeScenarioData.mes1_3 * 0.25)
   const stage2IngresosAdicionales = Math.round(activeScenarioData.mes4_6 * 0.76)
   const stage2ClientesRecuperados = Math.round(activeScenarioData.mes4_6 * 0.24)
-  const testimonials = useMemo(
-    () => getTestimonials(data.sector, data.facturacionMensual),
-    [data.sector, data.facturacionMensual]
-  )
 
   const goToAct7 = () => {
     act7Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -843,8 +874,6 @@ export function ResultsDashboardPage() {
     act2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const handleShare = () => goToStep(FunnelStep.SHARE)
-  const handleScheduleDemo = () => window.open('https://bewe.co/demo', '_blank')
   const handleFreeTrial = () => window.open('https://bewe.co/demo', '_blank')
 
   /**
@@ -909,6 +938,14 @@ export function ResultsDashboardPage() {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }, [])
 
+  // Scrollbar degradé — solo activa en esta página
+  useEffect(() => {
+    document.documentElement.classList.add('results-page')
+    return () => {
+      document.documentElement.classList.remove('results-page')
+    }
+  }, [])
+
   return (
     <FunnelLayout showHeader={false}>
       {/* ── SHARE MODAL (aparece 3s después de cargar) ── */}
@@ -916,6 +953,7 @@ export function ResultsDashboardPage() {
         businessName={data.nombreNegocio}
         roi={data.escenarioRealista.roi}
         potentialMonthly={data.escenarioRealista.mes4_6}
+        totalPerdidaMensual={data.totalPerdidaMensual}
         formatCurrency={formatCurrency}
         shareUrl={shareUrl ?? undefined}
       />
@@ -971,11 +1009,11 @@ export function ResultsDashboardPage() {
             }`}
             style={{ willChange: 'transform, opacity' }}
           >
-            <p className="text-[4.5rem] md:text-[7rem] font-black leading-none" style={{ color: '#F87171' }}>
+            <p className="font-black leading-none" style={{ color: '#F87171', fontSize: 'clamp(3rem, 12vw, 7rem)' }}>
               -{formatCurrency(heroAmount)}
             </p>
           </div>
-          <h1 className="text-h1 md:text-[3rem] font-bold text-white max-w-4xl" style={{ marginTop: '56px' }}>
+          <h1 className="font-bold text-white max-w-2xl" style={{ marginTop: '40px', fontSize: 'clamp(1.375rem, 5vw, 3rem)', lineHeight: '1.2' }}>
             Esto es lo que tu negocio está dejando de ganar cada mes
           </h1>
           <p className="text-body text-white/70" style={{ marginTop: '32px' }}>
@@ -995,17 +1033,17 @@ export function ResultsDashboardPage() {
         </section>
 
         <section ref={act2Ref} className="max-w-[1200px] mx-auto px-6 md:px-12" style={{ paddingTop: '80px', paddingBottom: '100px' }}>
-          <h2 className="text-h1 text-white mb-3 text-center">Radiografía de {data.nombreNegocio} Total</h2>
+          <h2 className="font-bold text-white mb-3 text-center" style={{ fontSize: 'clamp(1.375rem, 4.5vw, 2rem)', lineHeight: '1.2' }}>Radiografía de {data.nombreNegocio}</h2>
           <p className="text-body text-white/70 text-center" style={{ marginBottom: '48px' }}>
             Así está tu negocio HOY. Estos son los números reales que revelaron tus respuestas:
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px] mx-auto">
-            {[
+          {(() => {
+            const radiografiaCards: MetricItem[] = [
               {
                 icon: 'solar:alarm-linear', iconColor: '#F87171', iconBg: '#FEE2E2', iconClass: 'icono-alarma',
                 animation: 'alarmaRing', animDuration: '0.8s',
                 title: 'TIEMPO DE RESPUESTA', value: data.tiempoRespuestaPromedio,
-                description: 'Tiempo promedio que tardas en dar la primera respuesta a un cliente que te contacta.',
+                description: `Tiempo promedio que tardas en dar la primera respuesta a un ${t.cliente} que te contacta.`,
                 badge: 'Zona crítica de pérdida', badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
                 badgeIcon: 'solar:danger-triangle-linear', badgeIconColor: '#B91C1C', border: 'border-l-error',
               },
@@ -1017,20 +1055,20 @@ export function ResultsDashboardPage() {
                 badge: `${24 - data.horasAtencion} horas desatendidas`, badgeClass: 'bg-[#FEF3C7] text-[#B45309]',
                 badgeIcon: 'solar:clock-circle-linear', badgeIconColor: '#B45309', border: 'border-l-warning',
               },
-              {
+              ...(data.porcentajeNoShow > 0 ? [{
                 icon: 'solar:calendar-linear', iconColor: '#60A5FA', iconBg: '#DFEDFE', iconClass: 'icono-calendario',
                 animation: 'calendarioFloat', animDuration: '0.8s',
                 title: 'TASA DE NO-SHOW', value: `${data.porcentajeNoShow}%`,
-                description: 'Porcentaje de citas agendadas donde el cliente no se presenta. Espacios vacíos en tu agenda.',
-                badge: `${data.citasPerdidasMes} citas perdidas/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
+                description: `Porcentaje de ${t.citas} agendadas donde el ${t.cliente} no se presenta. Espacios vacíos en tu agenda.`,
+                badge: `${data.citasPerdidasMes} ${t.citas} perdidas/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
                 badgeIcon: 'solar:calendar-minimalistic-linear', badgeIconColor: '#B91C1C', border: 'border-l-error',
-              },
+              }] : []),
               {
                 icon: 'solar:user-cross-linear', iconColor: '#34D399', iconBg: '#D6F6EB', iconClass: 'icono-mano',
                 animation: 'manoAdios', animDuration: '0.8s',
                 title: 'CHURN MENSUAL', value: `${data.porcentajeChurn}%`,
-                description: 'Clientes que no vuelven después de su última visita. Pierdes clientes cada mes sin seguimiento.',
-                badge: `${data.clientesPerdidosMes} clientes perdidos/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
+                description: `${cap(t.clientes)} que no vuelven después de su última visita. Pierdes ${t.clientes} cada mes sin seguimiento.`,
+                badge: `${data.clientesPerdidosMes} ${t.clientes} perdidos/mes`, badgeClass: 'bg-[#FEE2E2] text-[#B91C1C]',
                 badgeIcon: 'solar:user-minus-linear', badgeIconColor: '#B91C1C', border: 'border-l-error',
               },
               {
@@ -1045,19 +1083,42 @@ export function ResultsDashboardPage() {
                 icon: 'solar:chat-round-dots-linear', iconColor: '#60A5FA', iconBg: '#DFEDFE', iconClass: 'icono-calendario',
                 animation: 'calendarioFloat', animDuration: '1.0s',
                 title: 'VOLUMEN DE CONVERSACIONES', value: `${data.conversacionesMensuales}/mes`,
-                description: 'Total de interacciones con clientes cada mes. Cada una es una oportunidad de venta.',
+                description: `Total de interacciones con ${t.clientes} cada mes. Cada una es una oportunidad de venta.`,
                 badge: `${data.tasaDeflexion}% son preguntas repetitivas`, badgeClass: 'bg-[#DFEDFE] text-[#1D4ED8]',
                 badgeIcon: 'solar:bolt-linear', badgeIconColor: '#1D4ED8', border: 'border-l-primary-400',
               },
-            ].map((metric, index) => (
-              <MetricCard key={metric.title} metric={metric as MetricItem} delayMs={(index + 1) * 100} />
-            ))}
-          </div>
+            ]
+            const isOddTotal = radiografiaCards.length % 2 !== 0
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px] mx-auto">
+                {radiografiaCards.map((metric, index) => {
+                  const isLastAlone = isOddTotal && index === radiografiaCards.length - 1
+                  if (isLastAlone) {
+                    return (
+                      <div
+                        key={metric.title}
+                        style={{ gridColumn: '1 / -1', maxWidth: '414px', width: '100%', margin: '0 auto' }}
+                      >
+                        <MetricCard metric={metric} delayMs={(index + 1) * 100} />
+                      </div>
+                    )
+                  }
+                  return (
+                    <MetricCard
+                      key={metric.title}
+                      metric={metric}
+                      delayMs={(index + 1) * 100}
+                    />
+                  )
+                })}
+              </div>
+            )
+          })()}
         </section>
 
         <section className="py-[100px] px-6 md:px-12">
           <div className="max-w-[900px] mx-auto">
-            <h2 ref={heartRef} className="text-h1 text-white mb-16 text-center flex items-center justify-center gap-3" style={{ marginBottom: '48px' }}>
+            <h2 ref={heartRef} className="font-bold text-white text-center flex items-center justify-center gap-3 flex-wrap" style={{ fontSize: 'clamp(1.375rem, 4.5vw, 2rem)', lineHeight: '1.2', marginBottom: '48px' }}>
               <HeartBreak triggered={heartVisible} />
               Aquí es donde se te escapa el dinero
             </h2>
@@ -1069,7 +1130,7 @@ export function ResultsDashboardPage() {
 
             <div ref={totalRef} className="rounded-2xl p-8 text-center border border-primary-100" style={{ marginTop: '40px', background: '#ffffff' }}>
               <p className="text-small tracking-widest font-semibold" style={{ color: '#64748B' }}>TOTAL DE OPORTUNIDADES IDENTIFICADAS</p>
-              <p className="text-[3rem] md:text-[4rem] font-black mt-2" style={{ color: 'var(--color-secondary-500)' }}>
+              <p className="font-black mt-2" style={{ fontSize: 'clamp(1.875rem, 8vw, 4rem)', color: 'var(--color-secondary-500)' }}>
                 {formatCurrency(totalVisible ? totalAmount : 0)}/mes
               </p>
               <p className="text-body mt-2" style={{ color: '#64748B' }}>Y esto es solo lo que podemos medir con los datos que proporcionaste...</p>
@@ -1077,16 +1138,16 @@ export function ResultsDashboardPage() {
           </div>
         </section>
 
-        <section style={{ marginTop: '48px', paddingTop: '60px', paddingBottom: '100px', paddingLeft: '80px', paddingRight: '80px', textAlign: 'center', color: 'white' }}>
+        <section className="px-6 md:px-20" style={{ marginTop: '48px', paddingTop: '60px', paddingBottom: '100px', textAlign: 'center', color: 'white' }}>
           <div style={{ maxWidth: '896px', margin: '0 auto' }}>
           <p className="text-h3 text-white/90">Pero aquí viene lo bueno...</p>
-          <h2 className="font-black" style={{ fontSize: '3.5rem', lineHeight: '1.1', fontWeight: 900, marginTop: '24px' }}>¿Y si pudieras recuperar todo eso?</h2>
+          <h2 className="font-black" style={{ fontSize: 'clamp(1.75rem, 7vw, 3.5rem)', lineHeight: '1.1', fontWeight: 900, marginTop: '24px' }}>¿Y si pudieras recuperar todo eso?</h2>
           <p className="text-body text-white/85 max-w-2xl mx-auto" style={{ marginTop: '32px', marginBottom: '48px' }}>
             No estamos hablando de trabajar más horas. Estamos hablando de <strong className="text-white font-bold">trabajar más inteligente.</strong>
           </p>
-          <div className="max-w-3xl mx-auto mt-10 text-left rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.93)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', padding: '60px' }}>
+          <div className="max-w-3xl mx-auto mt-10 text-left rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.93)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', padding: 'clamp(20px, 5vw, 60px)' }}>
             <p className="text-body text-base-dark font-bold text-center mb-6">Así funciona Linda IA en tiempo real:</p>
-            <ChatSimulation serviceType={serviceType} businessName={data.nombreNegocio} sector={data.sector} />
+            <ChatSimulation serviceType={serviceType} businessName={data.nombreNegocio} sector={data.sector} managesAppointments={data.porcentajeNoShow > 0} />
             <p className="text-small text-base-dark/60 mt-6">Tiempo de respuesta: 0 segundos · Disponible 24/7</p>
           </div>
           </div>
@@ -1097,18 +1158,53 @@ export function ResultsDashboardPage() {
 
           {/* Encabezado */}
           <div className="text-center" style={{ marginBottom: '56px' }}>
-            <h2 className="text-h1 text-white">Tu proyección de crecimiento con Linda IA</h2>
+            <h2 className="font-bold text-white" style={{ fontSize: 'clamp(1.375rem, 4.5vw, 2rem)', lineHeight: '1.2' }}>Tu proyección de crecimiento con Linda IA</h2>
             <p className="text-body" style={{ color: 'rgba(255,255,255,0.65)', marginTop: '16px' }}>
               Elige el escenario que mejor refleje tus expectativas y ve cómo crecería tu negocio
             </p>
           </div>
 
           {/* Selector de escenarios */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '56px' }}>
+          <style>{`
+            .scenario-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 24px;
+              margin-bottom: 56px;
+            }
+            @media (max-width: 640px) {
+              .scenario-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+              }
+              .scenario-card {
+                flex-direction: row !important;
+                align-items: center !important;
+                text-align: left !important;
+                padding: 20px !important;
+                gap: 16px;
+              }
+              .scenario-card-icon {
+                width: 56px !important;
+                height: 56px !important;
+                flex-shrink: 0;
+                margin-bottom: 0 !important;
+              }
+              .scenario-card-body {
+                flex: 1;
+                min-width: 0;
+              }
+              .scenario-card-desc {
+                display: none;
+              }
+            }
+          `}</style>
+          <div className="scenario-grid">
 
             {/* Card Conservador */}
             <button
               type="button"
+              className="scenario-card"
               onClick={() => { setActiveScenario('conservador'); setTimeout(() => scenarioContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}
               style={{
                 position: 'relative',
@@ -1128,19 +1224,22 @@ export function ResultsDashboardPage() {
                 transition: 'all 300ms ease',
               }}
             >
-              <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#DFEDFE', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div className="scenario-card-icon" style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#DFEDFE', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <IconComponent icon="solar:shield-check-linear" size="lg" color="#355B8A" />
               </div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540', marginBottom: '8px' }}>Conservador</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza el 60% de automatización. Adopción gradual y cautelosa.</p>
-              <span style={{ borderRadius: '999px', padding: '6px 18px', fontSize: '0.875rem', fontWeight: 600, background: activeScenario === 'conservador' ? '#60A5FA' : '#F1F5F9', color: activeScenario === 'conservador' ? '#fff' : '#64748B', marginTop: 'auto', transition: 'all 300ms' }}>
-                Escenario mínimo
-              </span>
+              <div className="scenario-card-body">
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: '140%', color: '#0A2540', marginBottom: '4px' }}>Conservador</p>
+                <p className="scenario-card-desc" style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza el 60% de automatización. Adopción gradual y cautelosa.</p>
+                <span style={{ borderRadius: '999px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 600, background: activeScenario === 'conservador' ? '#60A5FA' : '#F1F5F9', color: activeScenario === 'conservador' ? '#fff' : '#64748B', display: 'inline-block', marginTop: '6px', transition: 'all 300ms' }}>
+                  Escenario mínimo
+                </span>
+              </div>
             </button>
 
             {/* Card Realista – con estrella en esquina */}
             <button
               type="button"
+              className="scenario-card"
               onClick={() => { setActiveScenario('realista'); setTimeout(() => scenarioContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}
               style={{
                 position: 'relative',
@@ -1164,19 +1263,22 @@ export function ResultsDashboardPage() {
               <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
                 <IconComponent icon="solar:star-bold" size="sm" color="#F59E0B" />
               </div>
-              <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#D6F6EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div className="scenario-card-icon" style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#D6F6EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <IconComponent icon="solar:chart-2-linear" size="lg" color="#1D7454" />
               </div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540', marginBottom: '8px' }}>Realista</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza 70–80% de automatización. Escenario más probable basado en datos.</p>
-              <span style={{ borderRadius: '999px', padding: '6px 18px', fontSize: '0.875rem', fontWeight: 600, background: activeScenario === 'realista' ? '#34D399' : '#F1F5F9', color: activeScenario === 'realista' ? '#fff' : '#64748B', marginTop: 'auto', transition: 'all 300ms' }}>
-                Recomendado
-              </span>
+              <div className="scenario-card-body">
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: '140%', color: '#0A2540', marginBottom: '4px' }}>Realista</p>
+                <p className="scenario-card-desc" style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza 70–80% de automatización. Escenario más probable basado en datos.</p>
+                <span style={{ borderRadius: '999px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 600, background: activeScenario === 'realista' ? '#34D399' : '#F1F5F9', color: activeScenario === 'realista' ? '#fff' : '#64748B', display: 'inline-block', marginTop: '6px', transition: 'all 300ms' }}>
+                  Recomendado
+                </span>
+              </div>
             </button>
 
             {/* Card Optimista */}
             <button
               type="button"
+              className="scenario-card"
               onClick={() => { setActiveScenario('optimista'); setTimeout(() => scenarioContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}
               style={{
                 position: 'relative',
@@ -1196,14 +1298,16 @@ export function ResultsDashboardPage() {
                 transition: 'all 300ms ease',
               }}
             >
-              <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div className="scenario-card-icon" style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <IconComponent icon="solar:rocket-2-linear" size="lg" color="#B45309" />
               </div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540', marginBottom: '8px' }}>Optimista</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio supera el 85% de automatización. Implementación perfecta y alta adopción.</p>
-              <span style={{ borderRadius: '999px', padding: '6px 18px', fontSize: '0.875rem', fontWeight: 600, background: activeScenario === 'optimista' ? '#F59E0B' : '#F1F5F9', color: activeScenario === 'optimista' ? '#fff' : '#64748B', marginTop: 'auto', transition: 'all 300ms' }}>
-                Mejor caso
-              </span>
+              <div className="scenario-card-body">
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: '140%', color: '#0A2540', marginBottom: '4px' }}>Optimista</p>
+                <p className="scenario-card-desc" style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio supera el 85% de automatización. Implementación perfecta y alta adopción.</p>
+                <span style={{ borderRadius: '999px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 600, background: activeScenario === 'optimista' ? '#F59E0B' : '#F1F5F9', color: activeScenario === 'optimista' ? '#fff' : '#64748B', display: 'inline-block', marginTop: '6px', transition: 'all 300ms' }}>
+                  Mejor caso
+                </span>
+              </div>
             </button>
 
           </div>
@@ -1252,9 +1356,9 @@ export function ResultsDashboardPage() {
                     <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#34D399' }}>+{formatCurrency(value)}</span>
                   </div>
                 ))}
-                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-small font-semibold text-base-dark">TOTAL MES 3:</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#34D399' }}>+{formatCurrency(activeScenarioData.mes1_3)}/mes</span>
+                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span className="text-small font-semibold" style={{ color: '#64748B', letterSpacing: '0.05em' }}>TOTAL MES 3</span>
+                  <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)', fontWeight: 700, color: '#34D399', lineHeight: '1.2' }}>+{formatCurrency(activeScenarioData.mes1_3)}/mes</span>
                 </div>
               </div>
             </div>
@@ -1296,9 +1400,9 @@ export function ResultsDashboardPage() {
                     <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#34D399' }}>+{formatCurrency(value)}</span>
                   </div>
                 ))}
-                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-small font-semibold text-base-dark">TOTAL MES 6:</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#34D399' }}>+{formatCurrency(activeScenarioData.mes4_6)}/mes</span>
+                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span className="text-small font-semibold" style={{ color: '#64748B', letterSpacing: '0.05em' }}>TOTAL MES 6</span>
+                  <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)', fontWeight: 700, color: '#34D399', lineHeight: '1.2' }}>+{formatCurrency(activeScenarioData.mes4_6)}/mes</span>
                 </div>
               </div>
             </div>
@@ -1331,29 +1435,65 @@ export function ResultsDashboardPage() {
               </div>
 
               {/* Caja oscura – PROYECCIÓN COMPLETA AÑO 1 */}
-              <div style={{ background: 'linear-gradient(135deg, #0A2540 0%, #1B4F8A 40%, #2E8B7A 75%, #34D399 100%)', borderRadius: '16px', padding: '28px 24px' }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textAlign: 'center', marginBottom: '20px' }}>PROYECCIÓN COMPLETA — AÑO 1</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                  <div style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+              <style>{`
+                .proyeccion-grid {
+                  display: grid;
+                  grid-template-columns: repeat(3, 1fr);
+                  gap: 16px;
+                }
+                .proyeccion-value {
+                  font-size: 1.5rem;
+                  font-weight: 600;
+                  line-height: 130%;
+                  color: #34D399;
+                }
+                @media (max-width: 480px) {
+                  .proyeccion-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                  }
+                  .proyeccion-cell {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    align-items: center !important;
+                    text-align: left !important;
+                    gap: 14px;
+                    padding: 14px 16px !important;
+                  }
+                  .proyeccion-icon { flex-shrink: 0; }
+                  .proyeccion-value { font-size: 1.375rem !important; }
+                  .proyeccion-label { margin-top: 0 !important; }
+                }
+              `}</style>
+              <div style={{ background: 'linear-gradient(135deg, #0A2540 0%, #1B4F8A 40%, #2E8B7A 75%, #34D399 100%)', borderRadius: '16px', padding: '24px 20px' }}>
+                <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textAlign: 'center', marginBottom: '16px' }}>PROYECCIÓN COMPLETA — AÑO 1</p>
+                <div className="proyeccion-grid">
+                  <div className="proyeccion-cell" style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div className="proyeccion-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                       <IconComponent icon="solar:wallet-money-bold-duotone" size="lg" color="#34D399" />
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600, lineHeight: '130%', color: '#34D399' }}>+{formatCurrency(activeScenarioData.anio1)}</p>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>Incremento anual</p>
+                    <div>
+                      <p className="proyeccion-value">+{formatCurrency(activeScenarioData.anio1)}</p>
+                      <p className="proyeccion-label" style={{ fontSize: '0.8rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>Incremento anual</p>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                  <div className="proyeccion-cell" style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div className="proyeccion-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                       <IconComponent icon="solar:graph-up-bold-duotone" size="lg" color="#34D399" />
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600, lineHeight: '130%', color: '#34D399' }}>{activeScenarioData.roi.toLocaleString()}%</p>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>ROI primer año</p>
+                    <div>
+                      <p className="proyeccion-value">{activeScenarioData.roi.toLocaleString()}%</p>
+                      <p className="proyeccion-label" style={{ fontSize: '0.8rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>ROI primer año</p>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                  <div className="proyeccion-cell" style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div className="proyeccion-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                       <IconComponent icon="solar:alarm-bold-duotone" size="lg" color="#34D399" />
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600, lineHeight: '130%', color: '#34D399' }}>{activeScenarioData.horasAhorradas}h</p>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>Tiempo ahorrado</p>
+                    <div>
+                      <p className="proyeccion-value">{activeScenarioData.horasAhorradas}h</p>
+                      <p className="proyeccion-label" style={{ fontSize: '0.8rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>Tiempo ahorrado</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1387,7 +1527,7 @@ export function ResultsDashboardPage() {
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
             {/* Título principal — mismo estilo que "¿Y si pudieras recuperar todo eso?" */}
-            <h2 className="font-black" style={{ fontSize: '3.5rem', lineHeight: '1.1', fontWeight: 900, color: 'white', marginBottom: '16px', fontFamily: 'Inter, sans-serif' }}>
+            <h2 className="font-black" style={{ fontSize: 'clamp(1.75rem, 7vw, 3.5rem)', lineHeight: '1.1', fontWeight: 900, color: 'white', marginBottom: '16px', fontFamily: 'Inter, sans-serif' }}>
               Tu diagnóstico completo está listo 🎉
             </h2>
 
@@ -1495,16 +1635,16 @@ export function ResultsDashboardPage() {
         </section>
 
         {/* ── SECCIÓN: FUENTES Y METODOLOGÍA ── */}
-        <section className="py-[80px] px-6 md:px-12" style={{ marginTop: '80px' }}>
+        <section className="py-[80px] px-6 md:px-12" style={{ marginTop: '32px' }}>
           <div className="max-w-[1200px] mx-auto">
 
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Fuentes y Metodología</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 600, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Fuentes y Metodología</h2>
               <p style={{ fontSize: '1rem', fontWeight: 400, color: 'rgba(255,255,255,0.7)', lineHeight: '150%' }}>Transparencia total: así calculamos tu diagnóstico</p>
             </div>
 
             {/* 9 Fuentes académicas */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(340px, 100%), 1fr))', gap: '14px' }}>
               {[
                 { num: 1, title: 'Harvard Business Review – Lead Response Time',       finding: 'Las empresas que responden a leads en 5 minutos tienen 100x más probabilidad de contactarlos que las que responden en 30 minutos.',           url: 'https://hbr.org/2011/03/the-short-life-of-online-sales-leads' },
                 { num: 2, title: 'Velocify / Forbes – Speed to Lead',                   finding: 'El 35-50% de las ventas va al proveedor que responde primero. La velocidad de respuesta es el factor #1 en conversión.',                          url: 'https://www.forbes.com/sites/christinecomaford/2014/10/04/' },
@@ -1516,7 +1656,7 @@ export function ResultsDashboardPage() {
                 { num: 8, title: 'Harvard Business Review – Response Time Impact',      finding: 'Las empresas que responden dentro de la primera hora tienen 7 veces más probabilidad de tener una conversación significativa con un decisor.',       url: 'https://hbr.org/2011/03/the-short-life-of-online-sales-leads' },
                 { num: 9, title: 'BMJ / Journal of Medical – SMS Reminders',            finding: 'Los recordatorios por SMS reducen las tasas de no-show entre un 26% y 38% en servicios de salud y bienestar.',                                      url: 'https://www.bmj.com/content/342/bmj.d3527' },
               ].map(({ num, title, finding, url }) => (
-                <div key={num} style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '14px', padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                <div key={num} style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '14px', padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', minWidth: 0, boxSizing: 'border-box' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#D6F6EB', border: '1px solid #9AE9CC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#34D399' }}>{num}</span>
                   </div>
@@ -1535,11 +1675,11 @@ export function ResultsDashboardPage() {
         </section>
 
         {/* ── SECCIÓN: FÓRMULAS ── */}
-        <section className="px-6 md:px-12" style={{ marginTop: '80px', paddingTop: '80px', paddingBottom: '80px' }}>
+        <section className="px-6 md:px-12" style={{ marginTop: '32px', paddingTop: '80px', paddingBottom: '80px' }}>
           <div className="max-w-[1200px] mx-auto">
 
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Cómo calculamos tu diagnóstico</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 600, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Cómo calculamos tu diagnóstico</h2>
               <p style={{ fontSize: '1rem', fontWeight: 400, color: 'rgba(255,255,255,0.7)', lineHeight: '150%' }}>Fórmulas detalladas con tus datos reales</p>
             </div>
 
@@ -1651,13 +1791,15 @@ export function ResultsDashboardPage() {
                   <button
                     type="button"
                     onClick={() => setOpenFormula(openFormula === idx ? null : idx)}
-                    style={{ width: '100%', background: 'transparent', border: 'none', padding: '18px 24px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', textAlign: 'left' }}
+                    style={{ width: '100%', background: 'transparent', border: 'none', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', textAlign: 'left' }}
                   >
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${item.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: `${item.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <IconComponent icon={item.icon} size="sm" color={item.color} />
                     </div>
-                    <span style={{ flex: 1, fontSize: '1rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540' }}>{item.title}</span>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#34D399', marginRight: '8px' }}>+{formatCurrency(item.result)}/mes</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540' }}>{item.title}</span>
+                      <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#34D399', marginTop: '2px' }}>+{formatCurrency(item.result)}/mes</span>
+                    </div>
                     <IconComponent icon={openFormula === idx ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} size="sm" color="#64748B" />
                   </button>
                   {openFormula === idx && (

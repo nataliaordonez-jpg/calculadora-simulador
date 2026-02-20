@@ -12,7 +12,7 @@ import { Currency } from '@funnel/domain/enums/currency.enum'
 
 export function OnboardingPage() {
   const { dispatch } = useFunnelContext()
-  const { goToStep, progress } = useFunnelNavigation()
+  const { goToStep } = useFunnelNavigation()
 
   const [businessName, setBusinessName] = useState('')
   const [sector, setSector] = useState<Sector | null>(null)
