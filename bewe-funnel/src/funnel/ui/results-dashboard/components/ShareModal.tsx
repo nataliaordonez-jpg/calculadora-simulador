@@ -4,18 +4,21 @@ interface ShareModalProps {
   businessName: string
   roi: number
   potentialMonthly: number
+  totalPerdidaMensual: number
   formatCurrency: (val: number) => string
   /** URL única para compartir los resultados. Si no se provee, usa la URL actual. */
   shareUrl?: string
 }
 
-export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency, shareUrl: shareUrlProp }: ShareModalProps) => {
+export const ShareModal = ({ businessName, roi, potentialMonthly, totalPerdidaMensual, formatCurrency, shareUrl: shareUrlProp }: ShareModalProps) => {
   const [isVisible, setIsVisible] = useState(false)
   const [showFloatingBtn, setShowFloatingBtn] = useState(false)
   const [copied, setCopied] = useState(false)
   const [instagramLoading, setInstagramLoading] = useState(false)
   const [hoveredSocial, setHoveredSocial] = useState<string | null>(null)
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' })
+  const [whatsappCopied, setWhatsappCopied] = useState(false)
+  const [linkedinCopied, setLinkedinCopied] = useState(false)
 
   // shareUrl se actualiza reactivamente cuando llega el prop desde Supabase
   const shareUrl = shareUrlProp ?? null
@@ -75,39 +78,91 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const funnelUrl = window.location.origin
+  const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+  const buildWhatsAppMessage = () => {
+    const shocked    = String.fromCodePoint(0x1F631) // 😱
+    const pointRight = String.fromCodePoint(0x1F449) // 👉
+    return (
+      `${shocked} Acabo de descubrir que pierdo ${formatCurrency(totalPerdidaMensual)}/mes en mi negocio\n\n` +
+      `Hice este diagnóstico de 3 minutos y me abrió los ojos completamente\n\n` +
+      `Mis resultados:\n${pointRight} ${shareUrl}\n\n` +
+      `Haz el tuyo gratis:\n${pointRight} ${funnelUrl}\n\n` +
+      `Te va a sorprender`
+    )
+  }
+
   const shareWhatsApp = () => {
     if (!shareUrl) return
-    const text = encodeURIComponent(
-      `🎉 Mira el diagnóstico de ROI para ${businessName} con Linda IA:\n\n` +
-      `💰 ROI Proyectado: ${roi.toLocaleString()}%\n` +
-      `📈 Potencial de crecimiento: +${formatCurrency(potentialMonthly)}/mes\n\n` +
-      `Revisa los detalles completos aquí:`
-    )
-    window.open(`https://wa.me/?text=${text}%20${encodeURIComponent(shareUrl)}`, '_blank')
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    const message = buildWhatsAppMessage()
+
+    // En todos los casos: copia al portapapeles y muestra el banner
+    navigator.clipboard.writeText(message)
+      .then(() => {
+        setWhatsappCopied(true)
+        setTimeout(() => setWhatsappCopied(false), 15000)
+      })
+      .catch(() => {})
+
+    if (isMobile) {
+      // Móvil: muestra el banner un instante y luego abre la app nativa con el texto pre-cargado
+      setTimeout(() => {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+      }, 1200)
+    }
+    // Desktop: solo muestra el banner (no abre WhatsApp, el usuario pega el texto copiado)
   }
 
   const shareLinkedIn = () => {
     if (!shareUrl) return
-    window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-      '_blank'
-    )
+    // LinkedIn no permite pre-llenar texto desde URLs externas.
+    // Copiamos el copy al portapapeles y mostramos un banner con botón "Abrir LinkedIn".
+    const post =
+      `${formatCurrency(totalPerdidaMensual)}/mes en oportunidades perdidas.\n\n` +
+      `Eso es lo que reveló un diagnóstico de 3 minutos sobre mi negocio.\n\n` +
+      `El análisis identifica:\n` +
+      `→ Pérdidas actuales por consultas no atendidas\n` +
+      `→ Potencial de ingresos sin explotar\n` +
+      `→ ROI de automatización\n\n` +
+      `Basado en data de HBR, MIT y McKinsey.\n\n` +
+      `Mis resultados: ${shareUrl}\n` +
+      `Tu diagnóstico: ${funnelUrl}\n\n` +
+      `3 minutos que pueden cambiar tu perspectiva del negocio.\n\n` +
+      `#BusinessGrowth #Automatización #ROI`
+
+    navigator.clipboard.writeText(post)
+      .then(() => {
+        setLinkedinCopied(true)
+        setTimeout(() => setLinkedinCopied(false), 15000)
+      })
+      .catch(() => showToast('No se pudo copiar. Intenta de nuevo.'))
   }
 
   const shareTwitter = () => {
     if (!shareUrl) return
+    const dailyLoss = formatCurrency(Math.round(totalPerdidaMensual / 30))
     const text = encodeURIComponent(
-      `Acabo de descubrir el potencial real de mi negocio 🚀\n\n` +
-      `💰 ROI proyectado: ${roi.toLocaleString()}%\n` +
-      `📈 Potencial: +${formatCurrency(potentialMonthly)}/mes\n\n` +
-      `Mira mi diagnóstico completo:`
+      `Mi negocio pierde ${dailyLoss} cada día sin que me dé cuenta 💸\n\n` +
+      `3 minutos de diagnóstico me lo mostraron todo\n\n` +
+      `Mis resultados: ${shareUrl}\n\n` +
+      `Haz el tuyo gratis: ${funnelUrl}`
     )
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`, '_blank')
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank')
   }
 
   const shareInstagram = () => {
     if (!shareUrl) return
     setInstagramLoading(true)
+    // Copiar caption al portapapeles para que el usuario lo pegue en Instagram
+    const caption =
+      `${formatCurrency(totalPerdidaMensual)} 💸\n\n` +
+      `Eso pierdo CADA MES en mi negocio y yo aquí pensando que todo estaba bien 🤡\n\n` +
+      `Hice este diagnóstico de 3 min (gratis, sin nada) y me cambió la perspectiva completamente\n\n` +
+      `Link para hacer el tuyo: ${funnelUrl}\n\n` +
+      `¿Cuánto te salió a ti? 👇`
+    navigator.clipboard.writeText(caption).catch(() => {})
     setTimeout(() => {
       generateInstagramImage()
       setInstagramLoading(false)
@@ -210,7 +265,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      showToast('✓ Imagen descargada. Súbela a Instagram Stories')
+      showToast('✓ Imagen descargada y caption copiado. Pégalo en tu post de Instagram')
       setTimeout(() => {
         if (window.innerWidth <= 768) {
           window.location.href = 'instagram://story-camera'
@@ -281,6 +336,18 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
     <>
       {/* ── OVERLAY + MODAL ── */}
       {isVisible && (
+        <>
+        <style>{`
+          @media (max-width: 540px) {
+            .sm-modal-header   { padding: 22px 18px 18px !important; }
+            .sm-modal-icon     { width: 56px !important; height: 56px !important; font-size: 24px !important; margin-bottom: 12px !important; }
+            .sm-modal-title    { font-size: 1.125rem !important; }
+            .sm-modal-subtitle { font-size: 0.8125rem !important; }
+            .sm-modal-body     { padding: 16px 18px !important; }
+            .sm-modal-footer   { padding: 4px 18px 20px !important; }
+            .sm-social-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+          }
+        `}</style>
         <div
           onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
           style={{
@@ -294,21 +361,25 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
           <div style={{
             background: '#ffffff',
             borderRadius: '24px',
-            maxWidth: '600px',
+            maxWidth: '520px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
             boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
             animation: 'modalIn 320ms cubic-bezier(0.34,1.56,0.64,1) both',
             position: 'relative',
           }}>
 
             {/* ── HEADER ── */}
-            <div style={{
-              padding: '40px 40px 28px',
+            <div className="sm-modal-header" style={{
+              padding: '32px 28px 22px',
               borderBottom: '1px solid #E2E8F0',
               textAlign: 'center',
               position: 'relative',
+              boxSizing: 'border-box',
+              width: '100%',
             }}>
               {/* Botón X */}
               <button
@@ -332,26 +403,26 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
               </button>
 
               {/* Icono */}
-              <div style={{
-                width: '80px', height: '80px', borderRadius: '50%',
+              <div className="sm-modal-icon" style={{
+                width: '72px', height: '72px', borderRadius: '50%',
                 background: 'linear-gradient(135deg, #0A2540 0%, #1B4F8A 50%, #34D399 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 20px',
-                fontSize: '38px',
+                margin: '0 auto 16px',
+                fontSize: '32px',
               }}>
                 🎉
               </div>
 
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0A2540', lineHeight: '130%', marginBottom: '10px', fontFamily: 'Inter, sans-serif' }}>
+              <h2 className="sm-modal-title" style={{ fontSize: '1.375rem', fontWeight: 700, color: '#0A2540', lineHeight: '130%', marginBottom: '10px', fontFamily: 'Inter, sans-serif' }}>
                 ¡Tu Diagnóstico está Listo!
               </h2>
-              <p style={{ fontSize: '1rem', fontWeight: 400, color: '#64748B', lineHeight: '150%', fontFamily: 'Inter, sans-serif' }}>
+              <p className="sm-modal-subtitle" style={{ fontSize: '0.9375rem', fontWeight: 400, color: '#64748B', lineHeight: '150%', fontFamily: 'Inter, sans-serif' }}>
                 Guarda y comparte tus resultados para acceder a ellos cuando quieras
               </p>
             </div>
 
             {/* ── BODY ── */}
-            <div style={{ padding: '28px 40px' }}>
+            <div className="sm-modal-body" style={{ padding: '22px 28px', boxSizing: 'border-box', width: '100%' }}>
 
               {/* URL */}
               <div style={{ marginBottom: '28px' }}>
@@ -363,9 +434,9 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
                   </svg>
                   Tu enlace único:
                 </p>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', minWidth: 0 }}>
                   <div style={{
-                    flex: 1, padding: '12px 16px',
+                    flex: 1, minWidth: 0, padding: '12px 16px',
                     border: `2px solid ${isUrlReady ? '#E2E8F0' : '#B0D2FC'}`,
                     borderRadius: '12px',
                     background: isUrlReady ? '#F8FAFC' : '#EFF6FF',
@@ -421,7 +492,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
                   </svg>
                   Comparte en tus redes:
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                <div className="sm-social-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                   {socialButtons.map((social) => {
                     const isHovered = hoveredSocial === social.id
                     return (
@@ -455,6 +526,119 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
                     )
                   })}
                 </div>
+                {/* Banner WhatsApp copiado */}
+                {whatsappCopied && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '14px 16px',
+                    background: '#F0FDF4',
+                    border: '1.5px solid #86EFAC',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '20px', lineHeight: 1 }}>✅</span>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: '#166534', fontFamily: 'Inter, sans-serif', lineHeight: '130%' }}>
+                          Mensaje copiado al portapapeles
+                        </p>
+                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#15803D', fontFamily: 'Inter, sans-serif', fontWeight: 400, lineHeight: '130%' }}>
+                          {isMobileDevice
+                            ? 'Abriendo WhatsApp con el mensaje listo…'
+                            : <>Abre WhatsApp Web y pega con <kbd style={{ background: '#DCFCE7', border: '1px solid #86EFAC', borderRadius: '4px', padding: '1px 5px', fontSize: '0.7rem', fontFamily: 'monospace', color: '#166534' }}>Ctrl + V</kbd></>
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    {!isMobileDevice && (
+                      <button
+                        type="button"
+                        onClick={() => window.open('https://web.whatsapp.com/', '_blank')}
+                        style={{
+                          flexShrink: 0,
+                          padding: '8px 14px',
+                          background: '#25D366',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          fontFamily: 'Inter, sans-serif',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Abrir WhatsApp
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Banner LinkedIn copiado */}
+                {linkedinCopied && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '14px 16px',
+                    background: '#EFF6FF',
+                    border: '1.5px solid #93C5FD',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '20px', lineHeight: 1 }}>✅</span>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: '#1E3A5F', fontFamily: 'Inter, sans-serif', lineHeight: '130%' }}>
+                          Publicación copiada al portapapeles
+                        </p>
+                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#1D4ED8', fontFamily: 'Inter, sans-serif', fontWeight: 400, lineHeight: '130%' }}>
+                          Abre LinkedIn, crea una publicación y pega con <kbd style={{ background: '#DBEAFE', border: '1px solid #93C5FD', borderRadius: '4px', padding: '1px 5px', fontSize: '0.7rem', fontFamily: 'monospace', color: '#1E3A5F' }}>Ctrl + V</kbd>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => window.open('https://www.linkedin.com/feed/', '_blank')}
+                      style={{
+                        flexShrink: 0,
+                        padding: '8px 14px',
+                        background: '#0A66C2',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        fontFamily: 'Inter, sans-serif',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Abrir LinkedIn
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
                 {/* Nota Instagram */}
                 <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.75rem', color: '#94A3B8', marginTop: '10px', fontFamily: 'Inter, sans-serif', fontWeight: 400, lineHeight: '150%' }}>
                   {/* Solar: camera-linear */}
@@ -468,7 +652,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
             </div>
 
             {/* ── FOOTER ── */}
-            <div style={{ padding: '4px 40px 32px', textAlign: 'center' }}>
+            <div className="sm-modal-footer" style={{ padding: '4px 28px 24px', textAlign: 'center', boxSizing: 'border-box', width: '100%' }}>
               <button
                 type="button"
                 onClick={closeModal}
@@ -491,6 +675,7 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
 
           </div>
         </div>
+        </>
       )}
 
       {/* ── BOTÓN FLOTANTE CON RING PULSANTE ── */}
@@ -502,13 +687,24 @@ export const ShareModal = ({ businessName, roi, potentialMonthly, formatCurrency
               50%       { transform: scale(1.45); opacity: 0; }
             }
           `}</style>
+          <style>{`
+            @media (max-width: 540px) {
+              .sm-modal-header { padding: 22px 18px 18px !important; }
+              .sm-modal-icon   { width: 56px !important; height: 56px !important; font-size: 24px !important; margin-bottom: 12px !important; }
+              .sm-modal-title  { font-size: 1.125rem !important; }
+              .sm-modal-subtitle { font-size: 0.8125rem !important; }
+              .sm-modal-body   { padding: 16px 18px !important; }
+              .sm-modal-footer { padding: 4px 18px 20px !important; }
+              .sm-social-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+            }
+          `}</style>
 
           {/* Wrapper posiciona el conjunto; z-index y offset aquí */}
           <div
             style={{
               position: 'fixed',
-              bottom: '30px',
-              right: '90px',
+              bottom: '24px',
+              right: '20px',
               zIndex: 9998,
               animation: 'slideInBounce 500ms ease both',
             }}
