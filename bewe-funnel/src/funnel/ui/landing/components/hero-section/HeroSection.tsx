@@ -11,7 +11,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div className="max-w-6xl mx-auto px-6 md:px-12 text-center py-12">
         <LindaBadge text="Diagnóstico Gratuito" icon="🚀" variant="hero" />
 
-        <h1 className="font-bold text-base-dark mt-6 mb-6 leading-[1.1] max-w-4xl mx-auto !mb-12 md:!mb-10" style={{ fontSize: '3rem' }}>
+        <h1 className="font-bold text-base-dark mt-6 mb-6 leading-[1.15] max-w-4xl mx-auto !mb-12 md:!mb-10" style={{ fontSize: 'clamp(1.75rem, 6vw, 3rem)' }}>
           Calculadora de <span className="text-primary-400">Crecimiento</span> e Impacto de{' '}
           <span className="text-linda" style={{ color: '#34D399' }}>IA</span>
         </h1>
@@ -34,19 +34,17 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
 
         {/* Trust indicators */}
-        <div className="mt-24 flex flex-wrap items-center justify-center gap-8 text-small text-base-dark/50 !mb-12 md:!mb-12">
-          <div className="flex items-center gap-2">
-            <IconComponent icon="solar:check-circle-bold" size="md" color="var(--color-secondary-400)" />
-            <span>100% gratuito</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <IconComponent icon="solar:check-circle-bold" size="md" color="var(--color-secondary-400)" />
-            <span>Resultados inmediatos</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <IconComponent icon="solar:check-circle-bold" size="md" color="var(--color-secondary-400)" />
-            <span>Personalizado para tu sector</span>
-          </div>
+        <div className="mt-24 flex flex-wrap items-center justify-center gap-3 md:gap-6 text-small text-base-dark/50 !mb-12 md:!mb-12">
+          {[
+            { label: '100% Gratuito' },
+            { label: 'Sin compromiso' },
+            { label: 'Resultados inmediatos' },
+          ].map(({ label }) => (
+            <div key={label} className="flex items-center gap-1.5 whitespace-nowrap">
+              <IconComponent icon="solar:check-circle-bold" size="md" color="var(--color-secondary-400)" />
+              <span className="whitespace-nowrap">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>

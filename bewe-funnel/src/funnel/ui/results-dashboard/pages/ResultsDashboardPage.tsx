@@ -1009,11 +1009,11 @@ export function ResultsDashboardPage() {
             }`}
             style={{ willChange: 'transform, opacity' }}
           >
-            <p className="text-[4.5rem] md:text-[7rem] font-black leading-none" style={{ color: '#F87171' }}>
+            <p className="font-black leading-none" style={{ color: '#F87171', fontSize: 'clamp(3rem, 12vw, 7rem)' }}>
               -{formatCurrency(heroAmount)}
             </p>
           </div>
-          <h1 className="text-h1 md:text-[3rem] font-bold text-white max-w-4xl" style={{ marginTop: '56px' }}>
+          <h1 className="font-bold text-white max-w-2xl" style={{ marginTop: '40px', fontSize: 'clamp(1.375rem, 5vw, 3rem)', lineHeight: '1.2' }}>
             Esto es lo que tu negocio está dejando de ganar cada mes
           </h1>
           <p className="text-body text-white/70" style={{ marginTop: '32px' }}>
@@ -1033,7 +1033,7 @@ export function ResultsDashboardPage() {
         </section>
 
         <section ref={act2Ref} className="max-w-[1200px] mx-auto px-6 md:px-12" style={{ paddingTop: '80px', paddingBottom: '100px' }}>
-          <h2 className="text-h1 text-white mb-3 text-center">Radiografía de {data.nombreNegocio} Total</h2>
+          <h2 className="font-bold text-white mb-3 text-center" style={{ fontSize: 'clamp(1.375rem, 4.5vw, 2rem)', lineHeight: '1.2' }}>Radiografía de {data.nombreNegocio}</h2>
           <p className="text-body text-white/70 text-center" style={{ marginBottom: '48px' }}>
             Así está tu negocio HOY. Estos son los números reales que revelaron tus respuestas:
           </p>
@@ -1118,7 +1118,7 @@ export function ResultsDashboardPage() {
 
         <section className="py-[100px] px-6 md:px-12">
           <div className="max-w-[900px] mx-auto">
-            <h2 ref={heartRef} className="text-h1 text-white mb-16 text-center flex items-center justify-center gap-3" style={{ marginBottom: '48px' }}>
+            <h2 ref={heartRef} className="font-bold text-white text-center flex items-center justify-center gap-3 flex-wrap" style={{ fontSize: 'clamp(1.375rem, 4.5vw, 2rem)', lineHeight: '1.2', marginBottom: '48px' }}>
               <HeartBreak triggered={heartVisible} />
               Aquí es donde se te escapa el dinero
             </h2>
@@ -1130,7 +1130,7 @@ export function ResultsDashboardPage() {
 
             <div ref={totalRef} className="rounded-2xl p-8 text-center border border-primary-100" style={{ marginTop: '40px', background: '#ffffff' }}>
               <p className="text-small tracking-widest font-semibold" style={{ color: '#64748B' }}>TOTAL DE OPORTUNIDADES IDENTIFICADAS</p>
-              <p className="text-[3rem] md:text-[4rem] font-black mt-2" style={{ color: 'var(--color-secondary-500)' }}>
+              <p className="font-black mt-2" style={{ fontSize: 'clamp(1.875rem, 8vw, 4rem)', color: 'var(--color-secondary-500)' }}>
                 {formatCurrency(totalVisible ? totalAmount : 0)}/mes
               </p>
               <p className="text-body mt-2" style={{ color: '#64748B' }}>Y esto es solo lo que podemos medir con los datos que proporcionaste...</p>
@@ -1138,14 +1138,14 @@ export function ResultsDashboardPage() {
           </div>
         </section>
 
-        <section style={{ marginTop: '48px', paddingTop: '60px', paddingBottom: '100px', paddingLeft: '80px', paddingRight: '80px', textAlign: 'center', color: 'white' }}>
+        <section className="px-6 md:px-20" style={{ marginTop: '48px', paddingTop: '60px', paddingBottom: '100px', textAlign: 'center', color: 'white' }}>
           <div style={{ maxWidth: '896px', margin: '0 auto' }}>
           <p className="text-h3 text-white/90">Pero aquí viene lo bueno...</p>
-          <h2 className="font-black" style={{ fontSize: '3.5rem', lineHeight: '1.1', fontWeight: 900, marginTop: '24px' }}>¿Y si pudieras recuperar todo eso?</h2>
+          <h2 className="font-black" style={{ fontSize: 'clamp(1.75rem, 7vw, 3.5rem)', lineHeight: '1.1', fontWeight: 900, marginTop: '24px' }}>¿Y si pudieras recuperar todo eso?</h2>
           <p className="text-body text-white/85 max-w-2xl mx-auto" style={{ marginTop: '32px', marginBottom: '48px' }}>
             No estamos hablando de trabajar más horas. Estamos hablando de <strong className="text-white font-bold">trabajar más inteligente.</strong>
           </p>
-          <div className="max-w-3xl mx-auto mt-10 text-left rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.93)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', padding: '60px' }}>
+          <div className="max-w-3xl mx-auto mt-10 text-left rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.93)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.12)', padding: 'clamp(20px, 5vw, 60px)' }}>
             <p className="text-body text-base-dark font-bold text-center mb-6">Así funciona Linda IA en tiempo real:</p>
             <ChatSimulation serviceType={serviceType} businessName={data.nombreNegocio} sector={data.sector} managesAppointments={data.porcentajeNoShow > 0} />
             <p className="text-small text-base-dark/60 mt-6">Tiempo de respuesta: 0 segundos · Disponible 24/7</p>
@@ -1158,18 +1158,53 @@ export function ResultsDashboardPage() {
 
           {/* Encabezado */}
           <div className="text-center" style={{ marginBottom: '56px' }}>
-            <h2 className="text-h1 text-white">Tu proyección de crecimiento con Linda IA</h2>
+            <h2 className="font-bold text-white" style={{ fontSize: 'clamp(1.375rem, 4.5vw, 2rem)', lineHeight: '1.2' }}>Tu proyección de crecimiento con Linda IA</h2>
             <p className="text-body" style={{ color: 'rgba(255,255,255,0.65)', marginTop: '16px' }}>
               Elige el escenario que mejor refleje tus expectativas y ve cómo crecería tu negocio
             </p>
           </div>
 
           {/* Selector de escenarios */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '56px' }}>
+          <style>{`
+            .scenario-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 24px;
+              margin-bottom: 56px;
+            }
+            @media (max-width: 640px) {
+              .scenario-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+              }
+              .scenario-card {
+                flex-direction: row !important;
+                align-items: center !important;
+                text-align: left !important;
+                padding: 20px !important;
+                gap: 16px;
+              }
+              .scenario-card-icon {
+                width: 56px !important;
+                height: 56px !important;
+                flex-shrink: 0;
+                margin-bottom: 0 !important;
+              }
+              .scenario-card-body {
+                flex: 1;
+                min-width: 0;
+              }
+              .scenario-card-desc {
+                display: none;
+              }
+            }
+          `}</style>
+          <div className="scenario-grid">
 
             {/* Card Conservador */}
             <button
               type="button"
+              className="scenario-card"
               onClick={() => { setActiveScenario('conservador'); setTimeout(() => scenarioContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}
               style={{
                 position: 'relative',
@@ -1189,19 +1224,22 @@ export function ResultsDashboardPage() {
                 transition: 'all 300ms ease',
               }}
             >
-              <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#DFEDFE', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div className="scenario-card-icon" style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#DFEDFE', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <IconComponent icon="solar:shield-check-linear" size="lg" color="#355B8A" />
               </div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540', marginBottom: '8px' }}>Conservador</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza el 60% de automatización. Adopción gradual y cautelosa.</p>
-              <span style={{ borderRadius: '999px', padding: '6px 18px', fontSize: '0.875rem', fontWeight: 600, background: activeScenario === 'conservador' ? '#60A5FA' : '#F1F5F9', color: activeScenario === 'conservador' ? '#fff' : '#64748B', marginTop: 'auto', transition: 'all 300ms' }}>
-                Escenario mínimo
-              </span>
+              <div className="scenario-card-body">
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: '140%', color: '#0A2540', marginBottom: '4px' }}>Conservador</p>
+                <p className="scenario-card-desc" style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza el 60% de automatización. Adopción gradual y cautelosa.</p>
+                <span style={{ borderRadius: '999px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 600, background: activeScenario === 'conservador' ? '#60A5FA' : '#F1F5F9', color: activeScenario === 'conservador' ? '#fff' : '#64748B', display: 'inline-block', marginTop: '6px', transition: 'all 300ms' }}>
+                  Escenario mínimo
+                </span>
+              </div>
             </button>
 
             {/* Card Realista – con estrella en esquina */}
             <button
               type="button"
+              className="scenario-card"
               onClick={() => { setActiveScenario('realista'); setTimeout(() => scenarioContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}
               style={{
                 position: 'relative',
@@ -1225,19 +1263,22 @@ export function ResultsDashboardPage() {
               <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
                 <IconComponent icon="solar:star-bold" size="sm" color="#F59E0B" />
               </div>
-              <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#D6F6EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div className="scenario-card-icon" style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#D6F6EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <IconComponent icon="solar:chart-2-linear" size="lg" color="#1D7454" />
               </div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540', marginBottom: '8px' }}>Realista</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza 70–80% de automatización. Escenario más probable basado en datos.</p>
-              <span style={{ borderRadius: '999px', padding: '6px 18px', fontSize: '0.875rem', fontWeight: 600, background: activeScenario === 'realista' ? '#34D399' : '#F1F5F9', color: activeScenario === 'realista' ? '#fff' : '#64748B', marginTop: 'auto', transition: 'all 300ms' }}>
-                Recomendado
-              </span>
+              <div className="scenario-card-body">
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: '140%', color: '#0A2540', marginBottom: '4px' }}>Realista</p>
+                <p className="scenario-card-desc" style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio alcanza 70–80% de automatización. Escenario más probable basado en datos.</p>
+                <span style={{ borderRadius: '999px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 600, background: activeScenario === 'realista' ? '#34D399' : '#F1F5F9', color: activeScenario === 'realista' ? '#fff' : '#64748B', display: 'inline-block', marginTop: '6px', transition: 'all 300ms' }}>
+                  Recomendado
+                </span>
+              </div>
             </button>
 
             {/* Card Optimista */}
             <button
               type="button"
+              className="scenario-card"
               onClick={() => { setActiveScenario('optimista'); setTimeout(() => scenarioContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }}
               style={{
                 position: 'relative',
@@ -1257,14 +1298,16 @@ export function ResultsDashboardPage() {
                 transition: 'all 300ms ease',
               }}
             >
-              <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div className="scenario-card-icon" style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                 <IconComponent icon="solar:rocket-2-linear" size="lg" color="#B45309" />
               </div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540', marginBottom: '8px' }}>Optimista</p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio supera el 85% de automatización. Implementación perfecta y alta adopción.</p>
-              <span style={{ borderRadius: '999px', padding: '6px 18px', fontSize: '0.875rem', fontWeight: 600, background: activeScenario === 'optimista' ? '#F59E0B' : '#F1F5F9', color: activeScenario === 'optimista' ? '#fff' : '#64748B', marginTop: 'auto', transition: 'all 300ms' }}>
-                Mejor caso
-              </span>
+              <div className="scenario-card-body">
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: '140%', color: '#0A2540', marginBottom: '4px' }}>Optimista</p>
+                <p className="scenario-card-desc" style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: '#64748B', marginBottom: '24px' }}>Tu negocio supera el 85% de automatización. Implementación perfecta y alta adopción.</p>
+                <span style={{ borderRadius: '999px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 600, background: activeScenario === 'optimista' ? '#F59E0B' : '#F1F5F9', color: activeScenario === 'optimista' ? '#fff' : '#64748B', display: 'inline-block', marginTop: '6px', transition: 'all 300ms' }}>
+                  Mejor caso
+                </span>
+              </div>
             </button>
 
           </div>
@@ -1313,9 +1356,9 @@ export function ResultsDashboardPage() {
                     <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#34D399' }}>+{formatCurrency(value)}</span>
                   </div>
                 ))}
-                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-small font-semibold text-base-dark">TOTAL MES 3:</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#34D399' }}>+{formatCurrency(activeScenarioData.mes1_3)}/mes</span>
+                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span className="text-small font-semibold" style={{ color: '#64748B', letterSpacing: '0.05em' }}>TOTAL MES 3</span>
+                  <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)', fontWeight: 700, color: '#34D399', lineHeight: '1.2' }}>+{formatCurrency(activeScenarioData.mes1_3)}/mes</span>
                 </div>
               </div>
             </div>
@@ -1357,9 +1400,9 @@ export function ResultsDashboardPage() {
                     <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#34D399' }}>+{formatCurrency(value)}</span>
                   </div>
                 ))}
-                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="text-small font-semibold text-base-dark">TOTAL MES 6:</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#34D399' }}>+{formatCurrency(activeScenarioData.mes4_6)}/mes</span>
+                <div style={{ borderTop: '2px solid #CBD5E1', marginTop: '12px', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span className="text-small font-semibold" style={{ color: '#64748B', letterSpacing: '0.05em' }}>TOTAL MES 6</span>
+                  <span style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)', fontWeight: 700, color: '#34D399', lineHeight: '1.2' }}>+{formatCurrency(activeScenarioData.mes4_6)}/mes</span>
                 </div>
               </div>
             </div>
@@ -1392,29 +1435,65 @@ export function ResultsDashboardPage() {
               </div>
 
               {/* Caja oscura – PROYECCIÓN COMPLETA AÑO 1 */}
-              <div style={{ background: 'linear-gradient(135deg, #0A2540 0%, #1B4F8A 40%, #2E8B7A 75%, #34D399 100%)', borderRadius: '16px', padding: '28px 24px' }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textAlign: 'center', marginBottom: '20px' }}>PROYECCIÓN COMPLETA — AÑO 1</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                  <div style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+              <style>{`
+                .proyeccion-grid {
+                  display: grid;
+                  grid-template-columns: repeat(3, 1fr);
+                  gap: 16px;
+                }
+                .proyeccion-value {
+                  font-size: 1.5rem;
+                  font-weight: 600;
+                  line-height: 130%;
+                  color: #34D399;
+                }
+                @media (max-width: 480px) {
+                  .proyeccion-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                  }
+                  .proyeccion-cell {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    align-items: center !important;
+                    text-align: left !important;
+                    gap: 14px;
+                    padding: 14px 16px !important;
+                  }
+                  .proyeccion-icon { flex-shrink: 0; }
+                  .proyeccion-value { font-size: 1.375rem !important; }
+                  .proyeccion-label { margin-top: 0 !important; }
+                }
+              `}</style>
+              <div style={{ background: 'linear-gradient(135deg, #0A2540 0%, #1B4F8A 40%, #2E8B7A 75%, #34D399 100%)', borderRadius: '16px', padding: '24px 20px' }}>
+                <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textAlign: 'center', marginBottom: '16px' }}>PROYECCIÓN COMPLETA — AÑO 1</p>
+                <div className="proyeccion-grid">
+                  <div className="proyeccion-cell" style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div className="proyeccion-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                       <IconComponent icon="solar:wallet-money-bold-duotone" size="lg" color="#34D399" />
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600, lineHeight: '130%', color: '#34D399' }}>+{formatCurrency(activeScenarioData.anio1)}</p>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>Incremento anual</p>
+                    <div>
+                      <p className="proyeccion-value">+{formatCurrency(activeScenarioData.anio1)}</p>
+                      <p className="proyeccion-label" style={{ fontSize: '0.8rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>Incremento anual</p>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                  <div className="proyeccion-cell" style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div className="proyeccion-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                       <IconComponent icon="solar:graph-up-bold-duotone" size="lg" color="#34D399" />
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600, lineHeight: '130%', color: '#34D399' }}>{activeScenarioData.roi.toLocaleString()}%</p>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>ROI primer año</p>
+                    <div>
+                      <p className="proyeccion-value">{activeScenarioData.roi.toLocaleString()}%</p>
+                      <p className="proyeccion-label" style={{ fontSize: '0.8rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>ROI primer año</p>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                  <div className="proyeccion-cell" style={{ textAlign: 'center', padding: '16px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div className="proyeccion-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                       <IconComponent icon="solar:alarm-bold-duotone" size="lg" color="#34D399" />
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600, lineHeight: '130%', color: '#34D399' }}>{activeScenarioData.horasAhorradas}h</p>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>Tiempo ahorrado</p>
+                    <div>
+                      <p className="proyeccion-value">{activeScenarioData.horasAhorradas}h</p>
+                      <p className="proyeccion-label" style={{ fontSize: '0.8rem', fontWeight: 400, lineHeight: '150%', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>Tiempo ahorrado</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1448,7 +1527,7 @@ export function ResultsDashboardPage() {
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
             {/* Título principal — mismo estilo que "¿Y si pudieras recuperar todo eso?" */}
-            <h2 className="font-black" style={{ fontSize: '3.5rem', lineHeight: '1.1', fontWeight: 900, color: 'white', marginBottom: '16px', fontFamily: 'Inter, sans-serif' }}>
+            <h2 className="font-black" style={{ fontSize: 'clamp(1.75rem, 7vw, 3.5rem)', lineHeight: '1.1', fontWeight: 900, color: 'white', marginBottom: '16px', fontFamily: 'Inter, sans-serif' }}>
               Tu diagnóstico completo está listo 🎉
             </h2>
 
@@ -1556,16 +1635,16 @@ export function ResultsDashboardPage() {
         </section>
 
         {/* ── SECCIÓN: FUENTES Y METODOLOGÍA ── */}
-        <section className="py-[80px] px-6 md:px-12" style={{ marginTop: '80px' }}>
+        <section className="py-[80px] px-6 md:px-12" style={{ marginTop: '32px' }}>
           <div className="max-w-[1200px] mx-auto">
 
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Fuentes y Metodología</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 600, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Fuentes y Metodología</h2>
               <p style={{ fontSize: '1rem', fontWeight: 400, color: 'rgba(255,255,255,0.7)', lineHeight: '150%' }}>Transparencia total: así calculamos tu diagnóstico</p>
             </div>
 
             {/* 9 Fuentes académicas */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(340px, 100%), 1fr))', gap: '14px' }}>
               {[
                 { num: 1, title: 'Harvard Business Review – Lead Response Time',       finding: 'Las empresas que responden a leads en 5 minutos tienen 100x más probabilidad de contactarlos que las que responden en 30 minutos.',           url: 'https://hbr.org/2011/03/the-short-life-of-online-sales-leads' },
                 { num: 2, title: 'Velocify / Forbes – Speed to Lead',                   finding: 'El 35-50% de las ventas va al proveedor que responde primero. La velocidad de respuesta es el factor #1 en conversión.',                          url: 'https://www.forbes.com/sites/christinecomaford/2014/10/04/' },
@@ -1577,7 +1656,7 @@ export function ResultsDashboardPage() {
                 { num: 8, title: 'Harvard Business Review – Response Time Impact',      finding: 'Las empresas que responden dentro de la primera hora tienen 7 veces más probabilidad de tener una conversación significativa con un decisor.',       url: 'https://hbr.org/2011/03/the-short-life-of-online-sales-leads' },
                 { num: 9, title: 'BMJ / Journal of Medical – SMS Reminders',            finding: 'Los recordatorios por SMS reducen las tasas de no-show entre un 26% y 38% en servicios de salud y bienestar.',                                      url: 'https://www.bmj.com/content/342/bmj.d3527' },
               ].map(({ num, title, finding, url }) => (
-                <div key={num} style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '14px', padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                <div key={num} style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: '14px', padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', minWidth: 0, boxSizing: 'border-box' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#D6F6EB', border: '1px solid #9AE9CC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#34D399' }}>{num}</span>
                   </div>
@@ -1596,11 +1675,11 @@ export function ResultsDashboardPage() {
         </section>
 
         {/* ── SECCIÓN: FÓRMULAS ── */}
-        <section className="px-6 md:px-12" style={{ marginTop: '80px', paddingTop: '80px', paddingBottom: '80px' }}>
+        <section className="px-6 md:px-12" style={{ marginTop: '32px', paddingTop: '80px', paddingBottom: '80px' }}>
           <div className="max-w-[1200px] mx-auto">
 
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Cómo calculamos tu diagnóstico</h2>
+              <h2 style={{ fontSize: '2rem', fontWeight: 600, color: '#ffffff', lineHeight: '120%', marginBottom: '16px' }}>Cómo calculamos tu diagnóstico</h2>
               <p style={{ fontSize: '1rem', fontWeight: 400, color: 'rgba(255,255,255,0.7)', lineHeight: '150%' }}>Fórmulas detalladas con tus datos reales</p>
             </div>
 
@@ -1712,13 +1791,15 @@ export function ResultsDashboardPage() {
                   <button
                     type="button"
                     onClick={() => setOpenFormula(openFormula === idx ? null : idx)}
-                    style={{ width: '100%', background: 'transparent', border: 'none', padding: '18px 24px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', textAlign: 'left' }}
+                    style={{ width: '100%', background: 'transparent', border: 'none', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', textAlign: 'left' }}
                   >
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${item.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: `${item.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <IconComponent icon={item.icon} size="sm" color={item.color} />
                     </div>
-                    <span style={{ flex: 1, fontSize: '1rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540' }}>{item.title}</span>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#34D399', marginRight: '8px' }}>+{formatCurrency(item.result)}/mes</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: 500, lineHeight: '140%', color: '#0A2540' }}>{item.title}</span>
+                      <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#34D399', marginTop: '2px' }}>+{formatCurrency(item.result)}/mes</span>
+                    </div>
                     <IconComponent icon={openFormula === idx ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} size="sm" color="#64748B" />
                   </button>
                   {openFormula === idx && (

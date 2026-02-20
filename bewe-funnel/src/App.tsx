@@ -11,6 +11,7 @@ import { LeadCapturePage } from './funnel/ui/lead-capture/pages/LeadCapturePage'
 import { ResultsDashboardPage } from './funnel/ui/results-dashboard/pages/ResultsDashboardPage'
 import { SharedResultsPage } from './funnel/ui/results-dashboard/pages/SharedResultsPage'
 import { SocialSharePage } from './funnel/ui/social-share/pages/SocialSharePage'
+import { AnalyticsDashboardPage } from './funnel/ui/analytics/pages/AnalyticsDashboardPage'
 
 function App() {
   return (
@@ -28,6 +29,8 @@ function App() {
               {/* Ruta pública: carga resultados guardados por su shareId único */}
               <Route path="/r/:shareId" element={<SharedResultsPage />} />
               <Route path="/share" element={<SocialSharePage />} />
+              {/* Analytics — acceso solo por URL directa */}
+              <Route path="/analytics/Panelbewe.2025" element={<AnalyticsDashboardPage />} />
             </Routes>
           </FunnelProvider>
         </BrowserRouter>
