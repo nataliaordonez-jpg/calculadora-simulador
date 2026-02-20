@@ -670,7 +670,7 @@ export function AnalyticsDashboardPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94A3B8' }} tickFormatter={(v) => v.slice(5)} />
                   <YAxis yAxisId="count" tick={{ fontSize: 11, fill: '#94A3B8' }} />
                   <YAxis yAxisId="pct" orientation="right" tick={{ fontSize: 11, fill: '#94A3B8' }} unit="%" />
-                  <Tooltip labelFormatter={(l) => `Fecha: ${l}`} formatter={(val: number, name: string) => [
+                  <Tooltip labelFormatter={(l) => `Fecha: ${l}`} formatter={(val: any, name: any) => [
                     name === '% Conversión' ? `${val}%` : val,
                     name
                   ]} />
@@ -694,7 +694,7 @@ export function AnalyticsDashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                       <XAxis dataKey="questionNumber" label={{ value: 'Pregunta #', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#94A3B8' }} tick={{ fontSize: 11, fill: '#94A3B8' }} />
                       <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} allowDecimals={false} label={{ value: 'Abandonos', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#94A3B8' }} />
-                      <Tooltip formatter={(val: number) => [val, 'Abandonos']} labelFormatter={(l) => `Pregunta ${l}`} />
+                      <Tooltip formatter={(val: any) => [val, 'Abandonos']} labelFormatter={(l) => `Pregunta ${l}`} />
                       <Bar dataKey="abandonos" fill="#EF4444" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
